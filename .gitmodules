@@ -10,3 +10,9 @@
 [submodule "components/accel/Adafruit_Sensor"]
 	path = components/accel/Adafruit_Sensor
 	url = https://github.com/adafruit/Adafruit_Sensor
+[submodule "components/lcd/Adafruit-GFX"]
+	path = components/lcd/Adafruit-GFX
+	url = https://github.com/adafruit/Adafruit-GFX-Library.git
+[submodule "components/lcd/Adafruit_ILI9341"]
+	path = components/lcd/Adafruit_ILI9341
+	url = https://github.com/adafruit/Adafruit_ILI9341
