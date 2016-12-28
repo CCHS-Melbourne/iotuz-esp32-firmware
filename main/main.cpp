@@ -27,15 +27,15 @@ static const char *TAG = "iotuz";
 void blink_task(void *pvParameter)
 {
 
-    // /* Set the GPIO as a push/pull output */
-    // pinMode(BLINK_GPIO, OUTPUT);
-    // int level = 0;
-    //  toggle LED in every 500ms
-    // while(1) {
-    //     digitalWrite(BLINK_GPIO, level);
-    //     delay(500);
-    //     level = !level;
-    // }
+    /* Set the GPIO as a push/pull output */
+    pinMode(BLINK_GPIO, OUTPUT);
+    int level = 0;
+    // toggle LED in every 500ms
+    while(1) {
+        digitalWrite(BLINK_GPIO, level);
+        delay(500);
+        level = !level;
+    }
 }
 esp_err_t event_handler(void *ctx, system_event_t *event)
 {
@@ -68,10 +68,6 @@ extern "C" void app_main()
     ESP_ERROR_CHECK( esp_wifi_start() );
     ESP_ERROR_CHECK( esp_wifi_connect() );
 
-    init_mqtt_service();
-
-    xTaskCreate(&blink_task, "blink_task", 512, NULL, 5, NULL);
-
     delay(2000);
 
     ESP_LOGI(TAG, "I2C scanning with SDA=%d, CLK=%d", SDAPIN, SCLPIN);
@@ -89,4 +85,16 @@ extern "C" void app_main()
     }
     ESP_LOGI(TAG, "Found %d I2C devices by scanning.", foundCount);
 
+    xTaskCreate(&blink_task, "blink_task", 512, NULL, 5, NULL);
+
+    ESP_LOGI(TAG, "MQTT server=%s", CONFIG_MQTT_SERVER);
+    init_mqtt_service();
+
+    delay(2000);
+
+    int level = 0;
+    while (1) {
+        ESP_LOGI(TAG,"Hello from ESP-IDF!");
+        vTaskDelay(60000 / portTICK_PERIOD_MS);
+    }
 }
