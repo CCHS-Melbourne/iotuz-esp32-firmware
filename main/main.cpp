@@ -113,6 +113,7 @@ extern "C" void app_main()
                    name,
                    reading.sensor,
                    reading.value);
+          mqtt_publish_sensor(name, reading.value);
         }
     }
 }
