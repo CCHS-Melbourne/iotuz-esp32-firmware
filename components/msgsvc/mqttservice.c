@@ -41,6 +41,8 @@ mqtt_settings settings = {
     .data_cb = data_cb
 };
 
+char buf[32];
+
 static mqtt_client *client;
 
 void init_mqtt_service() {
@@ -51,7 +53,7 @@ void init_mqtt_service() {
     ESP_LOGI(TAG, "sta_mac=%x:%x:%x:%x:%x:%x\n", sta_mac[0],sta_mac[1],sta_mac[2],sta_mac[3],sta_mac[4],sta_mac[5]);
 
     // build the client id using last 3 octets of the mac address
-    char buf[32];
+    
     sprintf(buf, "esp32-%x%x%x", sta_mac[3],sta_mac[4],sta_mac[5]);
     strcpy(settings.client_id,buf);
 
@@ -64,7 +66,7 @@ void mqtt_publish_sensor(const char *sensor, float value)
   char databuf[16] = {0};
 
   int datalen = snprintf(databuf, sizeof(databuf)-1, "%.2f", value);
-  snprintf(topicbuf, sizeof(topicbuf)-1, "sensor/%s", sensor);
+  snprintf(topicbuf, sizeof(topicbuf)-1, "%s/sensor/%s", buf, sensor);
 
   ESP_LOGI(TAG, "Publishing to %s...", topicbuf);
   mqtt_publish(client, topicbuf, databuf, datalen, 0, 0);

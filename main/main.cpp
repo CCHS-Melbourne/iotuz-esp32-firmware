@@ -105,8 +105,6 @@ extern "C" void app_main()
 
     while (1) {
         sensor_reading_t reading;
-        ESP_LOGI(TAG,"Hello from ESP-IDF!");
-
         if (xQueueReceive(sensors, &reading, 60000 / portTICK_PERIOD_MS)) {
           const char *name = sensor_name(reading.sensor);
           ESP_LOGI(TAG, "sensor %s(%d) reading %.2f",
