@@ -9,6 +9,8 @@
 #include "driver/gpio.h"
 #include "mqttservice.h"
 
+#include "sensors.h"
+
 #include <Arduino.h>
 #include <Wire.h>
 
@@ -90,11 +92,28 @@ extern "C" void app_main()
     ESP_LOGI(TAG, "MQTT server=%s", CONFIG_MQTT_SERVER);
     init_mqtt_service();
 
+    /* start sensor data collection */
+    sensors_init();
+
+    /* subscribe to sensor values */
+    QueueHandle_t sensors = xQueueCreate(10, sizeof(sensor_reading_t));
+    if (!sensors_subscribe(sensors)) {
+      ESP_LOGE(TAG, "Failed to subscribe to sensor readings :(");
+    }
+
     delay(2000);
 
-    int level = 0;
     while (1) {
+        sensor_reading_t reading;
         ESP_LOGI(TAG,"Hello from ESP-IDF!");
-        vTaskDelay(60000 / portTICK_PERIOD_MS);
+
+        if (xQueueReceive(sensors, &reading, 60000 / portTICK_PERIOD_MS)) {
+          const char *name = sensor_name(reading.sensor);
+          ESP_LOGI(TAG, "sensor %s(%d) reading %.2f",
+                   name,
+                   reading.sensor,
+                   reading.value);
+          mqtt_publish_sensor(name, reading.value);
+        }
     }
 }
