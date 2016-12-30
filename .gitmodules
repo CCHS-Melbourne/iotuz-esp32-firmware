@@ -4,3 +4,9 @@
 [submodule "components/espmqtt"]
 	path = components/espmqtt
 	url = https://github.com/tuanpmt/espmqtt.git
+[submodule "components/accel/Adafruit_ADXL345"]
+	path = components/accel/Adafruit_ADXL345
+	url = https://github.com/adafruit/Adafruit_ADXL345
+[submodule "components/accel/Adafruit_Sensor"]
+	path = components/accel/Adafruit_Sensor
+	url = https://github.com/adafruit/Adafruit_Sensor

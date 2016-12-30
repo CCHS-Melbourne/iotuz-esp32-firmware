@@ -6,3 +6,6 @@
 # in the build directory. This behaviour is entirely configurable,
 # please read the ESP-IDF documents if you need to do this.
 #
+
+# using arduino libraries post 1.0
+CXXFLAGS += -DARDUINO=101 -DESP32 -Wno-error=maybe-uninitialized

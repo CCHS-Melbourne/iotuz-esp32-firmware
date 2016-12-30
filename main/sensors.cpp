@@ -3,6 +3,8 @@
 #include "freertos/task.h"
 #include <Arduino.h>
 #include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_ADXL345_U.h>
 
 #include "esp_log.h"
 
@@ -17,6 +19,8 @@ static SemaphoreHandle_t sensor_mutex;
 static const char *TAG = "sensors";
 
 static void sensor_task(void *arg);
+
+Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
 
 void sensors_init()
 {
@@ -34,6 +38,13 @@ void sensors_init()
       }
   }
   ESP_LOGI(TAG, "Found %d I2C devices by scanning.", foundCount);
+
+
+  if(!accel.begin()) {
+    ESP_LOGE(TAG, "no ADXL345 detected.");
+  } else {
+    accel.setRange(ADXL345_RANGE_16_G);
+  }
 
   sensor_mutex = xSemaphoreCreateMutex();
   xTaskCreate(sensor_task, "sensor_task", 4096, NULL, 1, NULL);
@@ -100,6 +111,9 @@ static void sensor_task(void *arg)
   while (1) {
 	vTaskDelay(10000 / portTICK_PERIOD_MS);
 
+  sensors_event_t event; 
+  bool accel_success = accel.getEvent(&event);
+
 	for (int i = 0; i < SENS_MAX; i++) {
 	  float value;
 
@@ -114,6 +128,27 @@ static void sensor_task(void *arg)
 	  case SENS_BAROMETRIC:
 		value = 3.0;
 		break;
+    case SENS_ACCEL_X:
+    if (accel_success){
+      value = event.acceleration.x;
+    } else {
+      continue;
+    }
+    break;
+    case SENS_ACCEL_Y:
+    if (accel_success){
+      value = event.acceleration.y;
+    } else {
+      continue;
+    }
+    break;
+    case SENS_ACCEL_Z:
+    if (accel_success){
+      value = event.acceleration.z;
+    } else {
+      continue;
+    }
+    break;
 	  default:
 		ESP_LOGE(TAG, "invalid tuz_sensor_t value %d", i);
 		continue;
@@ -133,6 +168,12 @@ const char *sensor_name(tuz_sensor_t sensor) {
 	return "altitude";
   case SENS_BAROMETRIC:
 	return "barometric";
+  case SENS_ACCEL_X:
+  return "accelerometer_x";
+  case SENS_ACCEL_Y:
+  return "accelerometer_y";
+  case SENS_ACCEL_Z:
+  return "accelerometer_z";
   default:
 	return "unknownsensor";
   }

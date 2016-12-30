@@ -7,3 +7,5 @@ PROJECT_NAME := app-template
 
 include $(IDF_PATH)/make/project.mk
 
+monitor:
+	miniterm.py --dtr 0 --rts 0 --raw ${ESPPORT} 115200

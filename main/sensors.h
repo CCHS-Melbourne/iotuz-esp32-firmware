@@ -8,6 +8,9 @@ typedef enum {
   SENS_TEMPERATURE,
   SENS_ALTITUDE,
   SENS_BAROMETRIC,
+  SENS_ACCEL_X,
+  SENS_ACCEL_Y,
+  SENS_ACCEL_Z,
 
   SENS_MAX
 } tuz_sensor_t;
