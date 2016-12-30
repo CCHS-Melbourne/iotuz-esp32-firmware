@@ -8,11 +8,10 @@
 #include "nvs_flash.h"
 #include "driver/gpio.h"
 #include "mqttservice.h"
+#include <Arduino.h>
 
 #include "sensors.h"
 
-#include <Arduino.h>
-#include <Wire.h>
 
 
 /* FreeRTOS event group to signal when we are connected & ready to make a tcp connection */
@@ -20,25 +19,7 @@ static EventGroupHandle_t wifi_event_group;
 
 static const char *TAG = "iotuz";
 
-#define BLINK_GPIO 16
 
-#define SDAPIN (GPIO_NUM_21)
-#define SCLPIN (GPIO_NUM_22)
-
-
-void blink_task(void *pvParameter)
-{
-
-    /* Set the GPIO as a push/pull output */
-    pinMode(BLINK_GPIO, OUTPUT);
-    int level = 0;
-    // toggle LED in every 500ms
-    while(1) {
-        digitalWrite(BLINK_GPIO, level);
-        delay(500);
-        level = !level;
-    }
-}
 esp_err_t event_handler(void *ctx, system_event_t *event)
 {
     return ESP_OK;
@@ -70,25 +51,6 @@ extern "C" void app_main()
     ESP_ERROR_CHECK( esp_wifi_start() );
     ESP_ERROR_CHECK( esp_wifi_connect() );
 
-    delay(2000);
-
-    ESP_LOGI(TAG, "I2C scanning with SDA=%d, CLK=%d", SDAPIN, SCLPIN);
-    Wire.begin(SDAPIN, SCLPIN);
-
-    int address;
-    int foundCount = 0;
-    for (address=1; address<127; address++) {
-        Wire.beginTransmission(address);
-        uint8_t error = Wire.endTransmission();
-        if (error == 0) {
-            foundCount++;
-            ESP_LOGI(TAG, "Found device at 0x%.2x", address);
-        }
-    }
-    ESP_LOGI(TAG, "Found %d I2C devices by scanning.", foundCount);
-
-    xTaskCreate(&blink_task, "blink_task", 512, NULL, 5, NULL);
-
     ESP_LOGI(TAG, "MQTT server=%s", CONFIG_MQTT_SERVER);
     init_mqtt_service();
 
@@ -100,8 +62,6 @@ extern "C" void app_main()
     if (!sensors_subscribe(sensors)) {
       ESP_LOGE(TAG, "Failed to subscribe to sensor readings :(");
     }
-
-    delay(2000);
 
     while (1) {
         sensor_reading_t reading;

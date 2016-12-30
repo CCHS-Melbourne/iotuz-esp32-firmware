@@ -1,8 +1,13 @@
 #include "sensors.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
+#include <Arduino.h>
+#include <Wire.h>
 
 #include "esp_log.h"
+
+#define SDAPIN (GPIO_NUM_21)
+#define SCLPIN (GPIO_NUM_22)
 
 static float readings[SENS_MAX-1];
 static QueueHandle_t *subscriptions;
@@ -15,6 +20,21 @@ static void sensor_task(void *arg);
 
 void sensors_init()
 {
+  ESP_LOGI(TAG, "I2C scanning with SDA=%d, CLK=%d", SDAPIN, SCLPIN);
+  Wire.begin(SDAPIN, SCLPIN);
+
+  int address;
+  int foundCount = 0;
+  for (address=1; address<127; address++) {
+      Wire.beginTransmission(address);
+      uint8_t error = Wire.endTransmission();
+      if (error == 0) {
+          foundCount++;
+          ESP_LOGI(TAG, "Found device at 0x%.2x", address);
+      }
+  }
+  ESP_LOGI(TAG, "Found %d I2C devices by scanning.", foundCount);
+
   sensor_mutex = xSemaphoreCreateMutex();
   xTaskCreate(sensor_task, "sensor_task", 4096, NULL, 1, NULL);
 }
