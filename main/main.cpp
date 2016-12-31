@@ -9,20 +9,62 @@
 #include "driver/gpio.h"
 #include "mqttservice.h"
 #include <Arduino.h>
+#include <Wire.h>
 
 #include "sensors.h"
 
-
+#define SDAPIN (GPIO_NUM_21)
+#define SCLPIN (GPIO_NUM_22)
 
 /* FreeRTOS event group to signal when we are connected & ready to make a tcp connection */
 static EventGroupHandle_t wifi_event_group;
+int xtender_address = 0x20;
 
 static const char *TAG = "iotuz";
 
+TwoWire i2cwire(0);
 
 esp_err_t event_handler(void *ctx, system_event_t *event)
 {
     return ESP_OK;
+}
+
+uint8_t pcf8574_write(uint8_t dt){
+  i2cwire.beginTransmission(xtender_address);
+  i2cwire.write(dt);
+
+  return i2cwire.endTransmission();
+}
+
+bool PCFInterruptFlag = false;
+
+void PCFInterrupt() {
+  ESP_LOGI(TAG, "Interrupt running");
+  PCFInterruptFlag = true;
+}
+
+void init_ioextender() {
+    uint8_t error;
+
+    // turn 0ff the screen
+    error = pcf8574_write(B11111111);
+
+    if (error) {
+        ESP_LOGE(TAG, "io extender error: %x", error);
+    }
+
+    delay(1000);
+
+    // turn on the screen
+    error = pcf8574_write(B01111111);
+
+    if (error) {
+        ESP_LOGE(TAG, "io extender error: %x", error);
+    }
+
+    pinMode(GPIO_NUM_25, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(GPIO_NUM_25), PCFInterrupt, FALLING);
+
 }
 
 extern "C" void app_main()
@@ -54,6 +96,12 @@ extern "C" void app_main()
     ESP_LOGI(TAG, "MQTT server=%s", CONFIG_MQTT_SERVER);
     init_mqtt_service();
 
+    ESP_LOGI(TAG, "Setup I2C with SDA=%d, CLK=%d", SDAPIN, SCLPIN);
+    i2cwire.begin(SDAPIN, SCLPIN);
+
+    ESP_LOGI(TAG, "io extender=%x", xtender_address);
+    init_ioextender();
+
     /* start sensor data collection */
     sensors_init();
 
@@ -72,6 +120,11 @@ extern "C" void app_main()
                    reading.sensor,
                    reading.value);
           mqtt_publish_sensor(name, reading.value);
+        }
+        ESP_LOGI(TAG, "check interrupt");
+        if (PCFInterruptFlag) {
+            ESP_LOGI(TAG, "PCFInterruptFlag");
+            PCFInterruptFlag = false;
         }
     }
 }

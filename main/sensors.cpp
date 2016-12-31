@@ -1,15 +1,8 @@
 #include "sensors.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
-#include <Arduino.h>
-#include <Wire.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_ADXL345_U.h>
 
 #include "esp_log.h"
-
-#define SDAPIN (GPIO_NUM_21)
-#define SCLPIN (GPIO_NUM_22)
 
 static float readings[SENS_MAX-1];
 static QueueHandle_t *subscriptions;
@@ -20,32 +13,8 @@ static const char *TAG = "sensors";
 
 static void sensor_task(void *arg);
 
-Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
-
 void sensors_init()
 {
-  ESP_LOGI(TAG, "I2C scanning with SDA=%d, CLK=%d", SDAPIN, SCLPIN);
-  Wire.begin(SDAPIN, SCLPIN);
-
-  int address;
-  int foundCount = 0;
-  for (address=1; address<127; address++) {
-      Wire.beginTransmission(address);
-      uint8_t error = Wire.endTransmission();
-      if (error == 0) {
-          foundCount++;
-          ESP_LOGI(TAG, "Found device at 0x%.2x", address);
-      }
-  }
-  ESP_LOGI(TAG, "Found %d I2C devices by scanning.", foundCount);
-
-
-  if(!accel.begin()) {
-    ESP_LOGE(TAG, "no ADXL345 detected.");
-  } else {
-    accel.setRange(ADXL345_RANGE_16_G);
-  }
-
   sensor_mutex = xSemaphoreCreateMutex();
   xTaskCreate(sensor_task, "sensor_task", 4096, NULL, 1, NULL);
 }
@@ -54,7 +23,7 @@ void sensors_init()
 static void sensor_set(tuz_sensor_t sensor, float value)
 {
   if (sensor >= SENS_MAX) {
-	return;
+  return;
   }
   /* Update our cache copy of the reading */
   xSemaphoreTake(sensor_mutex, portMAX_DELAY);
@@ -105,14 +74,21 @@ bool sensors_subscribe(QueueHandle_t queue)
   return true;
 }
 
+int loops;
+
 static void sensor_task(void *arg)
 {
   ESP_LOGI(TAG, "sensor task running");
-  while (1) {
-	vTaskDelay(10000 / portTICK_PERIOD_MS);
 
-  sensors_event_t event; 
-  bool accel_success = accel.getEvent(&event);
+  loops = 0;
+
+  while (1) {
+	vTaskDelay(100 / portTICK_PERIOD_MS);
+
+  if (loops < 100) {
+    loops++;
+    continue;
+  }
 
 	for (int i = 0; i < SENS_MAX; i++) {
 	  float value;
@@ -129,25 +105,13 @@ static void sensor_task(void *arg)
 		value = 3.0;
 		break;
     case SENS_ACCEL_X:
-    if (accel_success){
-      value = event.acceleration.x;
-    } else {
-      continue;
-    }
+    value = 3.0;
     break;
     case SENS_ACCEL_Y:
-    if (accel_success){
-      value = event.acceleration.y;
-    } else {
-      continue;
-    }
+    value = 3.0;
     break;
     case SENS_ACCEL_Z:
-    if (accel_success){
-      value = event.acceleration.z;
-    } else {
-      continue;
-    }
+    value = 3.0;
     break;
 	  default:
 		ESP_LOGE(TAG, "invalid tuz_sensor_t value %d", i);
@@ -155,6 +119,8 @@ static void sensor_task(void *arg)
 	  }
 
  	  sensor_set((tuz_sensor_t)i, value);
+
+    loops = 0;
 	}
   }
 
