@@ -11,7 +11,7 @@ COMPONENT_ADD_INCLUDEDIRS := Adafruit_ADXL345 Adafruit_Sensor
 
 COMPONENT_SRCDIRS := Adafruit_ADXL345 Adafruit_Sensor
 
-# using arduino libraries post 1.0
+# using arduino libraries post 1.0  -Wno-type-limits
 CPPFLAGS += -DARDUINO=101 -DESP32 -Wno-error=maybe-uninitialized
 
 

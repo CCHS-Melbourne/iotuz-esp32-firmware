@@ -23,6 +23,11 @@ make
 ESPPORT=/dev/tty.SLAB_USBtoUART make flash
 ```
 
+# todo
+
+* [ ] Add the event loop for buttons on the ioextender send to MQTT and local get value.
+* [ ]
+
 # references
 
 * [Espressif IoT Development Framework](https://github.com/espressif/esp-idf)
