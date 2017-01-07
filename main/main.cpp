@@ -9,6 +9,7 @@
 #include "driver/gpio.h"
 #include <Arduino.h>
 
+#include "iotuz_graphics.h"
 #include "mqttservice.h"
 #include "sensors.h"
 #include "ioextender.h"
@@ -57,6 +58,7 @@ extern "C" void app_main()
 
     /* start ioextender data collection */
     ioextender_init();
+    iotuz_graphics_initialize();
 
     /* subscribe to sensor values */
     QueueHandle_t sensors = xQueueCreate(10, sizeof(sensor_reading_t));

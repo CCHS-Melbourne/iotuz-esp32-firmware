@@ -6,10 +6,10 @@
 # lib(subdirectory_name).a in the build directory. This behaviour is entirely configurable,
 # please read the SDK documents if you need to do this.
 #
-COMPONENT_ADD_INCLUDEDIRS := Adafruit_ILI9341 Adafruit-GFX
+COMPONENT_ADD_INCLUDEDIRS := Adafruit_ILI9341 Adafruit-GFX iotuz_graphics
 #COMPONENT_PRIV_INCLUDEDIRS :=
 
-COMPONENT_SRCDIRS := Adafruit_ILI9341 Adafruit-GFX
+COMPONENT_SRCDIRS := Adafruit_ILI9341 Adafruit-GFX iotuz_graphics
 
 # using arduino libraries post 1.0
 CPPFLAGS += -DARDUINO=101 -DESP32 -Wno-error=maybe-uninitialized
