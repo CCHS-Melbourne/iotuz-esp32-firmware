@@ -54,7 +54,7 @@ static void i2c_scan_task(void *pvParameter)
 
     ESP_LOGI(TAG, "Found %d I2C devices by scanning.", foundCount);
 
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(15000 / portTICK_PERIOD_MS);
   }
 }
 

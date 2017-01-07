@@ -58,7 +58,12 @@ extern "C" void app_main()
 
 // Initialize sub-systems in orders of dependency ...
 
+    /* start ioextender data collection */
     ioextender_init();
+
+    ioextender_write(IOEXT_A_BTN, 1);
+    ioextender_write(IOEXT_B_BTN, 1);
+
     iotuz_graphics_initialize();
     sensors_init();
 
