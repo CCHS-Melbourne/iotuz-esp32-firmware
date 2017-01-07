@@ -7,7 +7,9 @@
 #include "esp_event_loop.h"
 #include "nvs_flash.h"
 #include "driver/gpio.h"
+#include "iotuz_graphics.h"
 #include "mqttservice.h"
+
 #include <Arduino.h>
 #include <Wire.h>
 
@@ -64,7 +66,6 @@ void init_ioextender() {
 
     pinMode(GPIO_NUM_25, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(GPIO_NUM_25), PCFInterrupt, FALLING);
-
 }
 
 extern "C" void app_main()
@@ -101,6 +102,7 @@ extern "C" void app_main()
 
     ESP_LOGI(TAG, "io extender=%x", xtender_address);
     init_ioextender();
+    iotuz_graphics_initialize();
 
     /* start sensor data collection */
     sensors_init();
