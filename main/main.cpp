@@ -28,6 +28,9 @@ extern "C" void app_main()
 {
 
     nvs_flash_init();
+
+// Initialize communications ...
+
     tcpip_adapter_init();
     wifi_event_group = xEventGroupCreate();
 
@@ -37,8 +40,8 @@ extern "C" void app_main()
     ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
     ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
 
-    // reads the wifi configuration from kconfig
-    // to update this run `make menuconfig`
+// reads the wifi configuration from kconfig
+// to update this run `make menuconfig`
     wifi_config_t wifi_config = {};
 
     strcpy((char*)wifi_config.sta.ssid, CONFIG_WIFI_SSID);
@@ -53,19 +56,17 @@ extern "C" void app_main()
     ESP_LOGI(TAG, "MQTT server=%s", CONFIG_MQTT_SERVER);
     init_mqtt_service();
 
-    /* start ioextender data collection */
+// Initialize sub-systems in orders of dependency ...
+
     ioextender_init();
-
-    ioextender_write(IOEXT_BACKLIGHT_CONTROL, 0); // turn on LCD backlight
-
-    /* start sensor data collection */
+    iotuz_graphics_initialize();
     sensors_init();
 
-    iotuz_graphics_initialize();
+// Suubscribe to sensor values ...
 
-    /* subscribe to sensor values */
     QueueHandle_t sensors = xQueueCreate(10, sizeof(sensor_reading_t));
-    if (!sensors_subscribe(sensors)) {
+
+    if (! sensors_subscribe(sensors)) {
       ESP_LOGE(TAG, "Failed to subscribe to sensor readings :(");
     }
 

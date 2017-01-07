@@ -7,6 +7,7 @@
 # please read the SDK documents if you need to do this.
 #
 COMPONENT_ADD_INCLUDEDIRS := Adafruit_ILI9341 Adafruit-GFX iotuz_graphics
+COMPONENT_ADD_INCLUDEDIRS += ../../main
 #COMPONENT_PRIV_INCLUDEDIRS :=
 
 COMPONENT_SRCDIRS := Adafruit_ILI9341 Adafruit-GFX iotuz_graphics
