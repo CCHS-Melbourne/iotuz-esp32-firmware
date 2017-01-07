@@ -58,6 +58,10 @@ extern "C" void app_main()
 
     /* start ioextender data collection */
     ioextender_init();
+
+    /* clear the MSB which controls the LCD backlight */
+    ioextender_write(7, 0);
+
     iotuz_graphics_initialize();
 
     /* subscribe to sensor values */
