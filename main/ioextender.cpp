@@ -4,6 +4,7 @@
 #include "freertos/task.h"
 #include "esp_log.h"
 #include <Wire.h>
+#include "pcf8574.h"
 
 #define SDAPIN (GPIO_NUM_21)
 #define SCLPIN (GPIO_NUM_22)
@@ -13,9 +14,12 @@
 static const char *TAG = "ioextender";
 
 static void i2c_scan_task(void *arg);
+static void pcf8574_check_task(void *arg);
 static bool isvalueinarray(int val, int *arr, int size);
 
 static int add_arr[] = {0x1a, 0x20, 0x53, 0x77};
+
+PCF8574 PCF_38(IOEXTENDER_ADDR);
 
 void ioextender_init() {
 
@@ -23,11 +27,12 @@ void ioextender_init() {
   Wire.begin(SDAPIN, SCLPIN);
 
   xTaskCreate(i2c_scan_task, "i2c_scan_task", 4096, NULL, 1, NULL);
+  xTaskCreate(pcf8574_check_task, "i2c_scan_task", 4096, NULL, 1, NULL);
 }
 
 static void i2c_scan_task(void *pvParameter)
 {
-  ESP_LOGI(TAG, "task running");
+  ESP_LOGI(TAG, "i2c scan task running");
 
   while(1)
   {
@@ -51,6 +56,32 @@ static void i2c_scan_task(void *pvParameter)
 
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
+}
+
+static void pcf8574_check_task(void *pvParameter)
+{
+  ESP_LOGI(TAG, "pcf8574 task running");
+
+  uint8_t value;
+
+  while(1)
+  {
+    value = PCF_38.read8();
+
+    ESP_LOGI(TAG, "Read ioextender 0x%.2x", value);
+
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+  }
+
+}
+
+void ioextender_write(uint8_t pin, uint8_t value)
+{
+  PCF_38.write(pin, value);
+}
+
+uint8_t ioextender_read(uint8_t pin) {
+  return PCF_38.read(pin);
 }
 
 static bool isvalueinarray(int val, int *arr, int size){
