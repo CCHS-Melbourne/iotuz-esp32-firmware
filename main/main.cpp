@@ -53,14 +53,13 @@ extern "C" void app_main()
     ESP_LOGI(TAG, "MQTT server=%s", CONFIG_MQTT_SERVER);
     init_mqtt_service();
 
-    /* start sensor data collection */
-    sensors_init();
-
     /* start ioextender data collection */
     ioextender_init();
 
-    /* clear the MSB which controls the LCD backlight */
-    ioextender_write(7, 0);
+    ioextender_write(IOEXT_BACKLIGHT_CONTROL, 0); // turn on LCD backlight
+
+    /* start sensor data collection */
+    sensors_init();
 
     iotuz_graphics_initialize();
 
