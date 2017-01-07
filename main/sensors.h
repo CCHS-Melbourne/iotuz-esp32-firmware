@@ -4,6 +4,10 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 
+typedef float (* tuz_sensor_read)(void *, void *);
+
+// This enum acts as a register of all the sensors in the
+// iotuz board
 typedef enum {
   SENS_TEMPERATURE,
   SENS_ALTITUDE,
@@ -14,6 +18,12 @@ typedef enum {
 
   SENS_MAX
 } tuz_sensor_t;
+
+typedef struct sensor_port_s {
+  tuz_sensor_t sensor;
+  float value;
+  tuz_sensor_read read_sensor;
+} tuz_sensor_port_t;
 
 /* Call to initialise sensors */
 void sensors_init();
