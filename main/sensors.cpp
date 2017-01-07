@@ -5,6 +5,7 @@
 #include "esp_log.h"
 
 static float readings[SENS_MAX-1];
+static tuz_sensor_port_t* open_ports[SENS_MAX-1];
 static QueueHandle_t *subscriptions;
 static size_t num_subscriptions;
 static SemaphoreHandle_t sensor_mutex;
@@ -17,6 +18,14 @@ void sensors_init()
 {
   sensor_mutex = xSemaphoreCreateMutex();
   xTaskCreate(sensor_task, "sensor_task", 4096, NULL, 1, NULL);
+}
+
+tuz_sensor_port_t*
+sensor_config(tuz_sensor_t sensor)
+{
+  tuz_sensor_port_t* tp = (tuz_sensor_port_t*)calloc(1, sizeof(tuz_sensor_port_t));
+  open_ports[sensor] = tp;
+  return tp;
 }
 
 /* Internal function to update a cached sensor reading */
