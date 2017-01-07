@@ -1,5 +1,6 @@
 #include "esp_log.h"
 
+#include "ioextender.h"
 #include "iotuz_graphics.h"
 
 #include <Arduino.h>
@@ -16,6 +17,8 @@ static const char *TAG = "iotuz_graphics";
 
 void iotuz_graphics_initialize(void) {
   ESP_LOGI(TAG, "Initialize LCD screen");
+
+  ioextender_write(IOEXT_BACKLIGHT_CONTROL, BACKLIGHT_ON);
 
   pinMode(TFT_CS,   OUTPUT);
   pinMode(TFT_MOSI, OUTPUT);
