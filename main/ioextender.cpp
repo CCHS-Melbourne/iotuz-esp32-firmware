@@ -26,6 +26,8 @@ void ioextender_init() {
   ESP_LOGI(TAG, "Setup I2C with SDA=%d, CLK=%d", SDAPIN, SCLPIN);
   Wire.begin(SDAPIN, SCLPIN);
 
+  PCF_38.write8(255);
+
   xTaskCreate(i2c_scan_task, "i2c_scan_task", 4096, NULL, 1, NULL);
   xTaskCreate(pcf8574_check_task, "i2c_scan_task", 4096, NULL, 1, NULL);
 }
@@ -69,6 +71,9 @@ static void pcf8574_check_task(void *pvParameter)
     value = PCF_38.read8();
 
     ESP_LOGI(TAG, "Read ioextender 0x%.2x", value);
+
+    ioextender_write(IOEXT_A_BTN, 1);
+    ioextender_write(IOEXT_B_BTN, 1);
 
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
