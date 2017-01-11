@@ -71,3 +71,13 @@ void mqtt_publish_sensor(const char *sensor, float value)
   ESP_LOGI(TAG, "Publishing to %s...", topicbuf);
   mqtt_publish(client, topicbuf, databuf, datalen, 0, 0);
 }
+
+void mqtt_publish_button(const char *sensor, const char *state)
+{
+  char topicbuf[64] = {0};
+
+  snprintf(topicbuf, sizeof(topicbuf)-1, "%s/buttons/%s", buf, sensor);
+
+  ESP_LOGI(TAG, "Publishing to %s...", topicbuf);
+  mqtt_publish(client, topicbuf, state, sizeof(state), 0, 0);
+}

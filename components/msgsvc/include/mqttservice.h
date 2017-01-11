@@ -17,6 +17,8 @@ void init_mqtt_service();
 */
 void mqtt_publish_sensor(const char *sensor, float value);
 
+void mqtt_publish_button(const char *sensor, const char *state);
+
 #ifdef __cplusplus
 }
 #endif

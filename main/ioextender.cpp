@@ -1,94 +1,115 @@
- #include "ioextender.h"
-
-#include "freertos/semphr.h"
-#include "freertos/task.h"
+#include "ioextender.h"
 #include "esp_log.h"
-#include <Wire.h>
-#include "pcf8574.h"
-
-#define SDAPIN (GPIO_NUM_21)
-#define SCLPIN (GPIO_NUM_22)
-
-#define IOEXTENDER_ADDR 0x20
 
 static const char *TAG = "ioextender";
 
-static void i2c_scan_task(void *arg);
-static void pcf8574_check_task(void *arg);
-static bool isvalueinarray(int val, int *arr, int size);
+TwoWire testWire(1);
+PCF857x pcf8574(0x20, &testWire);
 
-static int add_arr[] = {0x1a, 0x20, 0x53, 0x77};
+static QueueHandle_t *subscriptions;
+static size_t num_subscriptions;
 
-PCF8574 PCF_38(IOEXTENDER_ADDR);
+volatile bool PCFInterruptFlag = false;
 
-void ioextender_init() {
+static void pcf8574_check_task(void *pvParameter);
+void setup_pcf8574();
+void PCFInterrupt();
+bool check_button(button_check_s* button);
 
-  ESP_LOGI(TAG, "Setup I2C with SDA=%d, CLK=%d", SDAPIN, SCLPIN);
-  Wire.begin(SDAPIN, SCLPIN);
-
-  xTaskCreate(i2c_scan_task, "i2c_scan_task", 4096, NULL, 1, NULL);
-  xTaskCreate(pcf8574_check_task, "i2c_scan_task", 4096, NULL, 1, NULL);
+void ioextender_initialize() {
+  xTaskCreatePinnedToCore(pcf8574_check_task, "pcf8574_check_task", 4096, NULL, 1, NULL, 1);
 }
 
-static void i2c_scan_task(void *pvParameter)
+bool buttons_subscribe(QueueHandle_t queue)
 {
-  ESP_LOGI(TAG, "i2c scan task running");
-
-  while(1)
-  {
-    int address;
-    int foundCount = 0;
-
-    for (address=1; address<127; address++) {
-      Wire.beginTransmission(address);
-      uint8_t error = Wire.endTransmission();
-      if (error == 0) {
-        foundCount++;
-        //ESP_LOGI(TAG, "Found device at 0x%.2x", address);
-
-        if (!isvalueinarray(address, add_arr, 4)) {
-          ESP_LOGE(TAG, "Found unknown i2c device 0x%.2x", address);
-        }
-      }
-    }
-
-    ESP_LOGI(TAG, "Found %d I2C devices by scanning.", foundCount);
-
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+  void *new_subscriptions = realloc(subscriptions, (num_subscriptions + 1) * sizeof(QueueHandle_t));
+  if (!new_subscriptions) {
+	ESP_LOGE(TAG, "Failed to allocate new subscription #%d", (num_subscriptions+1));
+	return false;
   }
+
+  num_subscriptions++;
+  subscriptions = (QueueHandle_t *)new_subscriptions;
+  subscriptions[num_subscriptions-1] = queue;
+  return true;
 }
 
 static void pcf8574_check_task(void *pvParameter)
 {
-  ESP_LOGI(TAG, "pcf8574 task running");
 
-  uint8_t value;
+  button_check_s buttonA = {0, 0, HIGH, IOEXT_A_BTN, "ButtonA"};
+  button_check_s buttonB = {0, 0, HIGH, IOEXT_B_BTN, "ButtonB"};
+  button_check_s encoderButton = {0, 0, HIGH, IOEXT_ENCODER_BTN, "EncoderButton"};
 
-  while(1)
-  {
-    value = PCF_38.read8();
+  setup_pcf8574();
 
-    ESP_LOGI(TAG, "Read ioextender 0x%.2x", value);
+  while(1) {
+    if(PCFInterruptFlag){
+      // ESP_LOGI(TAG, "PCF Interrupt");
+      check_button(&buttonA);
+      check_button(&buttonB);
+      check_button(&encoderButton);
 
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+      pcf8574.resetInterruptPin();
+      PCFInterruptFlag = false;
+    }
+
+    vTaskDelay(IOEXT_POLL_INTERVAL_MILLIS / portTICK_PERIOD_MS);
+  }
+}
+
+void setup_pcf8574() 
+{
+
+  testWire.begin(GPIO_NUM_21, GPIO_NUM_22);
+  testWire.setClock(100000L);
+
+  pcf8574.begin();
+  
+  pcf8574.write8(B00101111);
+  
+  pinMode(IOEXT_INTERRUPT_PIN, INPUT_PULLUP);
+  pcf8574.resetInterruptPin();
+  attachInterrupt(digitalPinToInterrupt(IOEXT_INTERRUPT_PIN), PCFInterrupt, FALLING);
+
+}
+
+// this is a simple lockout debounce function
+bool check_button(button_check_s* button)
+{
+
+  uint8_t readState = pcf8574.read(button->pin);
+
+  if (readState == button->state) {
+    return false; // no state change
   }
 
-}
+  if (millis() - button->previous_millis >= IOEXT_DEBOUNCE_MILLIS) {
+    // We have passed the time threshold, so a new change of state is allowed.
+    button->previous_millis = millis();
+    button->state = readState;
 
-void ioextender_write(uint8_t pin, uint8_t value)
-{
-  PCF_38.write(pin, value);
-}
+    button_reading_t reading = {
+	  .label = button->label,
+	  .state = stringFromState(button->state),
+    };
 
-uint8_t ioextender_read(uint8_t pin) {
-  return PCF_38.read(pin);
-}
-
-static bool isvalueinarray(int val, int *arr, int size){
-    int i;
-    for (i=0; i < size; i++) {
-        if (arr[i] == val)
-            return true;
+    for (int i = 0; i < num_subscriptions; i++) {
+      xQueueSendToBack(subscriptions[i], &reading, 0);
     }
-    return false;
+
+    return true;
+  }
+
+  return false;
+}
+
+void PCFInterrupt() 
+{
+  PCFInterruptFlag = true;
+}
+
+void ioextender_write(uint8_t pin, uint8_t value) 
+{
+  //pcf8574.write(pin, value);
 }

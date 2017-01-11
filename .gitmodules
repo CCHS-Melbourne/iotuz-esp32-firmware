@@ -16,3 +16,6 @@
 [submodule "components/lcd/Adafruit_ILI9341"]
 	path = components/lcd/Adafruit_ILI9341
 	url = https://github.com/adafruit/Adafruit_ILI9341
+[submodule "components/ioextender/PCF8574_ESP"]
+	path = components/ioextender/PCF8574_ESP
+	url = https://github.com/WereCatf/PCF8574_ESP.git
