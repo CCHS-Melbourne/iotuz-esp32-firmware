@@ -1,8 +1,13 @@
-#pragma once
+# pragma once
+
+#include "freertos/FreeRTOS.h"
 
 #include <stdbool.h>
-#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
+#include "freertos/task.h"
 #include "freertos/queue.h"
+
+#include <pcf8574_esp.h>
 #include <Wire.h>
 
 #define IOEXT_ACCEL_INT          0
@@ -17,7 +22,30 @@
 #define BACKLIGHT_ON   0
 #define BACKLIGHT_OFF  1
 
-void ioextender_init();
-uint8_t ioextender_read(uint8_t pin);
-void ioextender_write(uint8_t pin, uint8_t value);
+#define IOEXT_INTERRUPT_PIN GPIO_NUM_25
+#define IOEXT_POLL_INTERVAL_MILLIS 50
+#define IOEXT_DEBOUNCE_MILLIS 100
 
+typedef struct {
+    unsigned long previous_millis;
+    uint16_t last_state;
+    uint8_t state;
+    uint8_t pin;
+    const char* label;
+} button_check_s;
+
+typedef struct {
+    const char* label;
+    const char* state;
+} button_reading_t;
+
+static inline const char* stringFromState(uint8_t bs)
+{
+    static const char *strings[] = { "DOWN", "UP"};
+
+    return strings[bs];
+}
+
+void ioextender_initialize();
+bool buttons_subscribe(QueueHandle_t queue);
+void ioextender_write(uint8_t pin, uint8_t value);
