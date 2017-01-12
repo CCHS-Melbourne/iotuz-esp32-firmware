@@ -19,6 +19,8 @@ void mqtt_publish_sensor(const char *sensor, float value);
 
 void mqtt_publish_button(const char *sensor, const char *state);
 
+void mqtt_publish_rotaryencoder(const char *sensor, int value);
+
 #ifdef __cplusplus
 }
 #endif
