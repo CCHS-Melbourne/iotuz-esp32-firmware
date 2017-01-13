@@ -11,6 +11,7 @@
 
 static const char *TAG = "iotuz";
 
+static void send_telemetry_task(void *pvParameter);
 static void send_sensors_task(void *pvParameter);
 static void send_buttons_task(void *pvParameter);
 static void send_rotaryencoder_task(void *pvParameter);
@@ -27,9 +28,24 @@ extern "C" void app_main()
     iotuz_graphics_initialize();
     sensors_init();
 
+    xTaskCreatePinnedToCore(send_telemetry_task, "send_telemetry_task", 4096, NULL, 1, NULL, 1);
     xTaskCreatePinnedToCore(send_sensors_task, "send_sensors_task", 4096, NULL, 1, NULL, 1);
     xTaskCreatePinnedToCore(send_buttons_task, "send_buttons_task", 4096, NULL, 1, NULL, 1);
     xTaskCreatePinnedToCore(send_rotaryencoder_task, "send_rotaryencoder_task", 4096, NULL, 1, NULL, 1);
+    
+}
+
+static void send_telemetry_task(void *pvParameter)
+{
+    uint32_t value;
+
+    while (1) {
+        value = esp_get_free_heap_size();
+
+        mqtt_publish_value("free_heap_size", "esp", value);
+
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
+    }
 }
 
 static void send_sensors_task(void *pvParameter) {

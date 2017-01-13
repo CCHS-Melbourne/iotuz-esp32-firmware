@@ -79,7 +79,7 @@ void mqtt_publish_button(const char *sensor, const char *state)
   snprintf(topicbuf, sizeof(topicbuf)-1, "%s/buttons/%s", buf, sensor);
 
   ESP_LOGI(TAG, "Publishing to %s...", topicbuf);
-  mqtt_publish(client, topicbuf, state, sizeof(state), 0, 0);
+  mqtt_publish(client, topicbuf, (char*)state, sizeof(state), 0, 0);
 }
 
 void mqtt_publish_rotaryencoder(const char *sensor, int value) 
@@ -89,6 +89,18 @@ void mqtt_publish_rotaryencoder(const char *sensor, int value)
 
   int datalen = snprintf(databuf, sizeof(databuf)-1, "%d", value);
   snprintf(topicbuf, sizeof(topicbuf)-1, "%s/encoder/%s", buf, sensor);
+
+  ESP_LOGI(TAG, "Publishing to %s...", topicbuf);
+  mqtt_publish(client, topicbuf, databuf, datalen, 0, 0);
+}
+
+void mqtt_publish_value(const char *sensor, const char *prefix, int value)
+{
+  char topicbuf[64] = {0};
+  char databuf[16] = {0};
+
+  int datalen = snprintf(databuf, sizeof(databuf)-1, "%d", value);
+  snprintf(topicbuf, sizeof(topicbuf)-1, "%s/%s/%s", buf, prefix, sensor);
 
   ESP_LOGI(TAG, "Publishing to %s...", topicbuf);
   mqtt_publish(client, topicbuf, databuf, datalen, 0, 0);
