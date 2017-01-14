@@ -11,12 +11,21 @@ static size_t num_subscriptions;
 
 volatile bool PCFInterruptFlag = false;
 
+static int add_arr[] = {0x1a, 0x20, 0x53, 0x77};
+
+static void i2c_scan_task(void *pvParameter);
+static bool isvalueinarray(int val, int *arr, int size);
+
 static void pcf8574_check_task(void *pvParameter);
 void setup_pcf8574();
 void PCFInterrupt();
 bool check_button(button_check_s* button);
 
 void ioextender_initialize() {
+
+  testWire.begin(GPIO_NUM_21, GPIO_NUM_22);
+  testWire.setClock(100000L);
+  
   xTaskCreatePinnedToCore(i2c_scan_task, "i2c_scan_task", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(pcf8574_check_task, "pcf8574_check_task", 4096, NULL, 1, NULL, 1);
 }
@@ -45,8 +54,8 @@ static void i2c_scan_task(void *pvParameter)
     int foundCount = 0;
 
     for (address=1; address<127; address++) {
-      Wire.beginTransmission(address);
-      uint8_t error = Wire.endTransmission();
+      testWire.beginTransmission(address);
+      uint8_t error = testWire.endTransmission();
       if (error == 0) {
         foundCount++;
         //ESP_LOGI(TAG, "Found device at 0x%.2x", address);
@@ -59,7 +68,7 @@ static void i2c_scan_task(void *pvParameter)
 
     ESP_LOGI(TAG, "Found %d I2C devices by scanning.", foundCount);
 
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(10000 / portTICK_PERIOD_MS);
   }
 }
 
@@ -89,9 +98,6 @@ static void pcf8574_check_task(void *pvParameter)
 
 void setup_pcf8574() 
 {
-
-  testWire.begin(GPIO_NUM_21, GPIO_NUM_22);
-  testWire.setClock(100000L);
 
   pcf8574.begin();
   
@@ -141,4 +147,13 @@ void PCFInterrupt()
 void ioextender_write(uint8_t pin, uint8_t value) 
 {
   //pcf8574.write(pin, value);
+}
+
+static bool isvalueinarray(int val, int *arr, int size){
+    int i;
+    for (i=0; i < size; i++) {
+        if (arr[i] == val)
+            return true;
+    }
+    return false;
 }
