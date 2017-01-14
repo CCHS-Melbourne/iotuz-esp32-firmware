@@ -105,7 +105,7 @@ static void send_rotaryencoder_task(void *pvParameter) {
     while (1) {
         rotaryencoder_reading_t reading;
         if (xQueueReceive(rotaryencoder, &reading, 6000 / portTICK_PERIOD_MS)) {
-            ESP_LOGI(TAG, "%s state %d",
+            ESP_LOGI(TAG, "%s reading %d",
                     reading.label,
                     reading.value);
             mqtt_publish_rotaryencoder(reading.label, reading.value);
