@@ -7,6 +7,7 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 
+#include "pins.h"
 #include <pcf8574_esp.h>
 #include <Wire.h>
 

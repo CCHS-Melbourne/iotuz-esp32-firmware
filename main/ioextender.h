@@ -7,6 +7,7 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 
+#include "pins.h"
 #include <pcf8574_esp.h>
 #include <Wire.h>
 
@@ -22,7 +23,6 @@
 #define BACKLIGHT_ON   0
 #define BACKLIGHT_OFF  1
 
-#define IOEXT_INTERRUPT_PIN GPIO_NUM_25
 #define IOEXT_POLL_INTERVAL_MILLIS 50
 #define IOEXT_DEBOUNCE_MILLIS 100
 

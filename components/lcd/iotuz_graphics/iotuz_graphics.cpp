@@ -49,6 +49,6 @@ static void iotuz_graphics_task(void *pvParameter)
     lcd.fillScreen(ILI9341_GREEN);
     lcd.fillScreen(ILI9341_BLUE);
 
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    vTaskDelay(10000 / portTICK_PERIOD_MS);
   }
 }

@@ -58,7 +58,7 @@ static void i2c_scan_task(void *pvParameter)
       uint8_t error = testWire.endTransmission();
       if (error == 0) {
         foundCount++;
-        //ESP_LOGI(TAG, "Found device at 0x%.2x", address);
+        ESP_LOGI(TAG, "Found device at 0x%.2x", address);
 
         if (!isvalueinarray(address, add_arr, 4)) {
           ESP_LOGE(TAG, "Found unknown i2c device 0x%.2x", address);
@@ -68,7 +68,7 @@ static void i2c_scan_task(void *pvParameter)
 
     ESP_LOGI(TAG, "Found %d I2C devices by scanning.", foundCount);
 
-    vTaskDelay(10000 / portTICK_PERIOD_MS);
+    vTaskDelay(30000 / portTICK_PERIOD_MS);
   }
 }
 
