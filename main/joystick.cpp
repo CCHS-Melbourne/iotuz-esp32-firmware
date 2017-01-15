@@ -46,7 +46,7 @@ static void joystick_check_task(void *pvParameter)
       int x_value = analogRead(JOYSTICK_PIN_X);
       int y_value = analogRead(JOYSTICK_PIN_Y);
 
-      bool changed = (abs(joystick.last_x - x_value) > 5) || (abs(joystick.last_y - y_value) > 5);
+      bool changed = (abs(joystick.last_x - x_value) > 20) || (abs(joystick.last_y - y_value) > 20);
 
       if (changed) {
         ESP_LOGI(TAG, "x %d y %d", x_value, y_value);

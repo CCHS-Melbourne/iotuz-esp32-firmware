@@ -13,20 +13,12 @@ static SemaphoreHandle_t sensor_mutex;
 
 static const char *TAG = "sensors";
 
-TwoWire *i2cWire;
-BME280 bme280(0x77, i2cWire);
+
 
 static void sensor_task(void *arg);
 
-void sensors_initialize(TwoWire *wire)
+void sensors_initialize()
 {
-  i2cWire = wire;
-  bme280 = BME280(0x77, i2cWire);
-  sensor_mutex = xSemaphoreCreateMutex();
-
-  ESP_LOGI(TAG, "BME280 0x%02x", bme280.begin());
-  ESP_LOGI(TAG, "ID(0xD0) 0x%02x", bme280.readRegister(BME280_CHIP_ID_REG));
-
   xTaskCreate(sensor_task, "sensor_task", 4096, NULL, 1, NULL);
 }
 
@@ -91,6 +83,17 @@ static void sensor_task(void *arg)
 {
   ESP_LOGI(TAG, "sensor task running");
 
+  TwoWire i2cWire(1);
+
+  i2cWire.begin(GPIO_NUM_21, GPIO_NUM_22);
+  i2cWire.setClock(100000L);
+
+  BME280 bme280(0x77, &i2cWire);
+  sensor_mutex = xSemaphoreCreateMutex();
+
+  ESP_LOGI(TAG, "BME280 0x%02x", bme280.begin());
+  ESP_LOGI(TAG, "ID(0xD0) 0x%02x", bme280.readRegister(BME280_CHIP_ID_REG));
+
   loops = 0;
 
   while (1) {
@@ -107,13 +110,16 @@ static void sensor_task(void *arg)
 	  /* TODO: actually take readings here */
 	  switch((tuz_sensor_t)i) {
 	  case SENS_TEMPERATURE:
-		value = sensor_get(SENS_TEMPERATURE) + 1.0;
+		value = bme280.readTempC();
+		break;
+	  case SENS_HUMIDITY:
+    value = bme280.readFloatHumidity();
 		break;
 	  case SENS_ALTITUDE:
-		value = sensor_get(SENS_ALTITUDE) - 1.0;
+    value = bme280.readFloatAltitudeMeters();
 		break;
 	  case SENS_BAROMETRIC:
-		value = 3.0;
+		value = bme280.readFloatPressure();
 		break;
 	  default:
 		ESP_LOGE(TAG, "invalid tuz_sensor_t value %d", i);
@@ -132,6 +138,8 @@ const char *sensor_name(tuz_sensor_t sensor) {
   switch(sensor) {
   case SENS_TEMPERATURE:
 	return "temperature";
+  case SENS_HUMIDITY:
+	return "humidity";
   case SENS_ALTITUDE:
 	return "altitude";
   case SENS_BAROMETRIC:

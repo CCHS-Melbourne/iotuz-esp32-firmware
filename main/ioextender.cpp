@@ -3,7 +3,7 @@
 
 static const char *TAG = "ioextender";
 
-TwoWire *testWire;
+static TwoWire testWire(1);
 
 static QueueHandle_t *subscriptions;
 static size_t num_subscriptions;
@@ -20,10 +20,11 @@ void setup_pcf8574();
 void PCFInterrupt();
 bool check_button(PCF857x *pcf8574, button_check_s* button);
 
-void ioextender_initialize(TwoWire *wire) {
+void ioextender_initialize() {
 
-  testWire = wire;
-  
+  testWire.begin(GPIO_NUM_21, GPIO_NUM_22);
+  testWire.setClock(100000L);
+
   xTaskCreatePinnedToCore(i2c_scan_task, "i2c_scan_task", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(pcf8574_check_task, "pcf8574_check_task", 4096, NULL, 1, NULL, 1);
 }
@@ -52,8 +53,8 @@ static void i2c_scan_task(void *pvParameter)
     int foundCount = 0;
 
     for (address=1; address<127; address++) {
-      testWire->beginTransmission(address);
-      uint8_t error = testWire->endTransmission();
+      testWire.beginTransmission(address);
+      uint8_t error = testWire.endTransmission();
       if (error == 0) {
         foundCount++;
         ESP_LOGI(TAG, "Found device at 0x%.2x", address);
@@ -77,7 +78,7 @@ static void pcf8574_check_task(void *pvParameter)
   button_check_s buttonB = {0, 0, HIGH, IOEXT_B_BTN, "ButtonB"};
   button_check_s encoderButton = {0, 0, HIGH, IOEXT_ENCODER_BTN, "EncoderButton"};
 
-  PCF857x pcf8574(0x20, testWire);
+  PCF857x pcf8574(0x20, &testWire);
 
   pcf8574.begin();
   

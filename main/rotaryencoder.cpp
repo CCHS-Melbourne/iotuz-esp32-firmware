@@ -50,6 +50,8 @@ static void rotaryencoder_check_task(void *pvParameter)
 void update_encoder(rotaryencoder_check_s *encoder)
 {
 
+  int last_encoder_value = encoder->encoder_value;
+
   int MSB = digitalRead(RENC_PIN1);
   int LSB = digitalRead(RENC_PIN2);
 
@@ -59,7 +61,16 @@ void update_encoder(rotaryencoder_check_s *encoder)
   if(sum == 0b1101 || sum == 0b0100 || sum == 0b0010 || sum == 0b1011) encoder->encoder_value ++;
   if(sum == 0b1110 || sum == 0b0111 || sum == 0b0001 || sum == 0b1000) encoder->encoder_value --;
 
+  if (encoded == 0) {
+    return;
+  }
+
+  if (last_encoder_value == encoder->encoder_value) {
+    return;
+  }
+
   ESP_LOGI(TAG, "encoder read #%d", encoder->encoder_value);
+  ESP_LOGI(TAG, "last_encoded #%d encoded #%d", encoder->encoder_value, encoded);
 
   encoder->last_encoded = encoded;
   encoder->previous_millis = millis();

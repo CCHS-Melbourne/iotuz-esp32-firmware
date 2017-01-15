@@ -13,6 +13,7 @@ typedef float (* tuz_sensor_read)(void *, void *);
 // iotuz board
 typedef enum {
   SENS_TEMPERATURE,
+  SENS_HUMIDITY,
   SENS_ALTITUDE,
   SENS_BAROMETRIC,
 
@@ -20,7 +21,7 @@ typedef enum {
 } tuz_sensor_t;
 
 /* Call to initialise sensors */
-void sensors_initialize(TwoWire *wire);
+void sensors_initialize();
 
 /* Call to return latest reading for a sensor */
 float sensor_get(tuz_sensor_t sensor);
