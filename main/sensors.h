@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
+#include <Wire.h>
 
 #include "pins.h"
 
@@ -12,23 +13,15 @@ typedef float (* tuz_sensor_read)(void *, void *);
 // iotuz board
 typedef enum {
   SENS_TEMPERATURE,
+  SENS_HUMIDITY,
   SENS_ALTITUDE,
   SENS_BAROMETRIC,
-  SENS_ACCEL_X,
-  SENS_ACCEL_Y,
-  SENS_ACCEL_Z,
 
   SENS_MAX
 } tuz_sensor_t;
 
-typedef struct sensor_port_s {
-  tuz_sensor_t sensor;
-  float value;
-  tuz_sensor_read read_sensor;
-} tuz_sensor_port_t;
-
 /* Call to initialise sensors */
-void sensors_init();
+void sensors_initialize();
 
 /* Call to return latest reading for a sensor */
 float sensor_get(tuz_sensor_t sensor);

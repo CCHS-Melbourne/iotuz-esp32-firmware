@@ -28,14 +28,14 @@ extern "C" void app_main()
     ioextender_initialize();
     rotaryencoder_initialize();
     iotuz_graphics_initialize();
-    sensors_init();
-    // joystick_initialize();
+    sensors_initialize();
+    joystick_initialize();
 
     xTaskCreatePinnedToCore(send_telemetry_task, "send_telemetry_task", 4096, NULL, 1, NULL, 1);
     xTaskCreatePinnedToCore(send_sensors_task, "send_sensors_task", 4096, NULL, 1, NULL, 1);
     xTaskCreatePinnedToCore(send_buttons_task, "send_buttons_task", 4096, NULL, 1, NULL, 1);
     xTaskCreatePinnedToCore(send_rotaryencoder_task, "send_rotaryencoder_task", 4096, NULL, 1, NULL, 1);
-    // xTaskCreatePinnedToCore(send_joystick_task, "send_joystick_task", 4096, NULL, 1, NULL, 1);
+    xTaskCreatePinnedToCore(send_joystick_task, "send_joystick_task", 4096, NULL, 1, NULL, 1);
 }
 
 static void send_telemetry_task(void *pvParameter)

@@ -1,31 +1,25 @@
 #include "sensors.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
+#include "SparkFunBME280.h"
 
 #include "esp_log.h"
 
 static float readings[SENS_MAX-1];
-static tuz_sensor_port_t* open_ports[SENS_MAX-1];
+
 static QueueHandle_t *subscriptions;
 static size_t num_subscriptions;
 static SemaphoreHandle_t sensor_mutex;
 
 static const char *TAG = "sensors";
 
+
+
 static void sensor_task(void *arg);
 
-void sensors_init()
+void sensors_initialize()
 {
-  sensor_mutex = xSemaphoreCreateMutex();
   xTaskCreate(sensor_task, "sensor_task", 4096, NULL, 1, NULL);
-}
-
-tuz_sensor_port_t*
-sensor_config(tuz_sensor_t sensor)
-{
-  tuz_sensor_port_t* tp = (tuz_sensor_port_t*)calloc(1, sizeof(tuz_sensor_port_t));
-  open_ports[sensor] = tp;
-  return tp;
 }
 
 /* Internal function to update a cached sensor reading */
@@ -89,6 +83,17 @@ static void sensor_task(void *arg)
 {
   ESP_LOGI(TAG, "sensor task running");
 
+  TwoWire i2cWire(1);
+
+  i2cWire.begin(GPIO_NUM_21, GPIO_NUM_22);
+  i2cWire.setClock(100000L);
+
+  BME280 bme280(0x77, &i2cWire);
+  sensor_mutex = xSemaphoreCreateMutex();
+
+  ESP_LOGI(TAG, "BME280 0x%02x", bme280.begin());
+  ESP_LOGI(TAG, "ID(0xD0) 0x%02x", bme280.readRegister(BME280_CHIP_ID_REG));
+
   loops = 0;
 
   while (1) {
@@ -105,23 +110,17 @@ static void sensor_task(void *arg)
 	  /* TODO: actually take readings here */
 	  switch((tuz_sensor_t)i) {
 	  case SENS_TEMPERATURE:
-		value = sensor_get(SENS_TEMPERATURE) + 1.0;
+		value = bme280.readTempC();
+		break;
+	  case SENS_HUMIDITY:
+    value = bme280.readFloatHumidity();
 		break;
 	  case SENS_ALTITUDE:
-		value = sensor_get(SENS_ALTITUDE) - 1.0;
+    value = bme280.readFloatAltitudeMeters();
 		break;
 	  case SENS_BAROMETRIC:
-		value = 3.0;
+		value = bme280.readFloatPressure();
 		break;
-    case SENS_ACCEL_X:
-    value = 3.0;
-    break;
-    case SENS_ACCEL_Y:
-    value = 3.0;
-    break;
-    case SENS_ACCEL_Z:
-    value = 3.0;
-    break;
 	  default:
 		ESP_LOGE(TAG, "invalid tuz_sensor_t value %d", i);
 		continue;
@@ -139,16 +138,12 @@ const char *sensor_name(tuz_sensor_t sensor) {
   switch(sensor) {
   case SENS_TEMPERATURE:
 	return "temperature";
+  case SENS_HUMIDITY:
+	return "humidity";
   case SENS_ALTITUDE:
 	return "altitude";
   case SENS_BAROMETRIC:
 	return "barometric";
-  case SENS_ACCEL_X:
-  return "accelerometer_x";
-  case SENS_ACCEL_Y:
-  return "accelerometer_y";
-  case SENS_ACCEL_Z:
-  return "accelerometer_z";
   default:
 	return "unknownsensor";
   }

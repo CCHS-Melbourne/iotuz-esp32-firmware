@@ -3,8 +3,7 @@
 
 static const char *TAG = "ioextender";
 
-TwoWire testWire(1);
-PCF857x pcf8574(0x20, &testWire);
+static TwoWire testWire(1);
 
 static QueueHandle_t *subscriptions;
 static size_t num_subscriptions;
@@ -19,13 +18,13 @@ static bool isvalueinarray(int val, int *arr, int size);
 static void pcf8574_check_task(void *pvParameter);
 void setup_pcf8574();
 void PCFInterrupt();
-bool check_button(button_check_s* button);
+bool check_button(PCF857x *pcf8574, button_check_s* button);
 
 void ioextender_initialize() {
 
   testWire.begin(GPIO_NUM_21, GPIO_NUM_22);
   testWire.setClock(100000L);
-  
+
   xTaskCreatePinnedToCore(i2c_scan_task, "i2c_scan_task", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(pcf8574_check_task, "pcf8574_check_task", 4096, NULL, 1, NULL, 1);
 }
@@ -79,25 +78,7 @@ static void pcf8574_check_task(void *pvParameter)
   button_check_s buttonB = {0, 0, HIGH, IOEXT_B_BTN, "ButtonB"};
   button_check_s encoderButton = {0, 0, HIGH, IOEXT_ENCODER_BTN, "EncoderButton"};
 
-  setup_pcf8574();
-
-  while(1) {
-    if(PCFInterruptFlag){
-      // ESP_LOGI(TAG, "PCF Interrupt");
-      check_button(&buttonA);
-      check_button(&buttonB);
-      check_button(&encoderButton);
-
-      pcf8574.resetInterruptPin();
-      PCFInterruptFlag = false;
-    }
-
-    vTaskDelay(IOEXT_POLL_INTERVAL_MILLIS / portTICK_PERIOD_MS);
-  }
-}
-
-void setup_pcf8574() 
-{
+  PCF857x pcf8574(0x20, &testWire);
 
   pcf8574.begin();
   
@@ -107,13 +88,26 @@ void setup_pcf8574()
   pcf8574.resetInterruptPin();
   attachInterrupt(digitalPinToInterrupt(IOEXT_INTERRUPT_PIN), PCFInterrupt, FALLING);
 
+  while(1) {
+    if(PCFInterruptFlag){
+      // ESP_LOGI(TAG, "PCF Interrupt");
+      check_button(&pcf8574, &buttonA);
+      check_button(&pcf8574, &buttonB);
+      check_button(&pcf8574, &encoderButton);
+
+      pcf8574.resetInterruptPin();
+      PCFInterruptFlag = false;
+    }
+
+    vTaskDelay(IOEXT_POLL_INTERVAL_MILLIS / portTICK_PERIOD_MS);
+  }
 }
 
 // this is a simple lockout debounce function
-bool check_button(button_check_s* button)
+bool check_button(PCF857x *pcf8574, button_check_s* button)
 {
 
-  uint8_t readState = pcf8574.read(button->pin);
+  uint8_t readState = pcf8574->read(button->pin);
 
   if (readState == button->state) {
     return false; // no state change
