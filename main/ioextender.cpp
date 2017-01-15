@@ -11,12 +11,22 @@ static size_t num_subscriptions;
 
 volatile bool PCFInterruptFlag = false;
 
+static int add_arr[] = {0x1a, 0x20, 0x53, 0x77};
+
+static void i2c_scan_task(void *pvParameter);
+static bool isvalueinarray(int val, int *arr, int size);
+
 static void pcf8574_check_task(void *pvParameter);
 void setup_pcf8574();
 void PCFInterrupt();
 bool check_button(button_check_s* button);
 
 void ioextender_initialize() {
+
+  testWire.begin(GPIO_NUM_21, GPIO_NUM_22);
+  testWire.setClock(100000L);
+  
+  xTaskCreatePinnedToCore(i2c_scan_task, "i2c_scan_task", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(pcf8574_check_task, "pcf8574_check_task", 4096, NULL, 1, NULL, 1);
 }
 
@@ -32,6 +42,34 @@ bool buttons_subscribe(QueueHandle_t queue)
   subscriptions = (QueueHandle_t *)new_subscriptions;
   subscriptions[num_subscriptions-1] = queue;
   return true;
+}
+
+static void i2c_scan_task(void *pvParameter)
+{
+  ESP_LOGI(TAG, "i2c scan task running");
+
+  while(1)
+  {
+    int address;
+    int foundCount = 0;
+
+    for (address=1; address<127; address++) {
+      testWire.beginTransmission(address);
+      uint8_t error = testWire.endTransmission();
+      if (error == 0) {
+        foundCount++;
+        ESP_LOGI(TAG, "Found device at 0x%.2x", address);
+
+        if (!isvalueinarray(address, add_arr, 4)) {
+          ESP_LOGE(TAG, "Found unknown i2c device 0x%.2x", address);
+        }
+      }
+    }
+
+    ESP_LOGI(TAG, "Found %d I2C devices by scanning.", foundCount);
+
+    vTaskDelay(30000 / portTICK_PERIOD_MS);
+  }
 }
 
 static void pcf8574_check_task(void *pvParameter)
@@ -60,9 +98,6 @@ static void pcf8574_check_task(void *pvParameter)
 
 void setup_pcf8574() 
 {
-
-  testWire.begin(GPIO_NUM_21, GPIO_NUM_22);
-  testWire.setClock(100000L);
 
   pcf8574.begin();
   
@@ -112,4 +147,13 @@ void PCFInterrupt()
 void ioextender_write(uint8_t pin, uint8_t value) 
 {
   //pcf8574.write(pin, value);
+}
+
+static bool isvalueinarray(int val, int *arr, int size){
+    int i;
+    for (i=0; i < size; i++) {
+        if (arr[i] == val)
+            return true;
+    }
+    return false;
 }

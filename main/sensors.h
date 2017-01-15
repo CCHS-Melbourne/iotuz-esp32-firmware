@@ -4,6 +4,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 
+#include "pins.h"
+
 typedef float (* tuz_sensor_read)(void *, void *);
 
 // This enum acts as a register of all the sensors in the
