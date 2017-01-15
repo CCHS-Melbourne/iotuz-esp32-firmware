@@ -46,6 +46,6 @@ static inline const char* stringFromState(uint8_t bs)
     return strings[bs];
 }
 
-void ioextender_initialize();
+void ioextender_initialize(TwoWire *wire);
 bool buttons_subscribe(QueueHandle_t queue);
 void ioextender_write(uint8_t pin, uint8_t value);

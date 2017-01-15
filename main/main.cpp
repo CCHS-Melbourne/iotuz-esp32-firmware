@@ -12,6 +12,8 @@
 
 static const char *TAG = "iotuz";
 
+TwoWire mainWire(1);
+
 static void send_telemetry_task(void *pvParameter);
 static void send_sensors_task(void *pvParameter);
 static void send_buttons_task(void *pvParameter);
@@ -25,10 +27,10 @@ extern "C" void app_main()
 
     wifi_initialize();    
     init_mqtt_service();
-    ioextender_initialize();
+    ioextender_initialize(&mainWire);
     rotaryencoder_initialize();
     iotuz_graphics_initialize();
-    sensors_init();
+    sensors_initialize(&mainWire);
     // joystick_initialize();
 
     xTaskCreatePinnedToCore(send_telemetry_task, "send_telemetry_task", 4096, NULL, 1, NULL, 1);

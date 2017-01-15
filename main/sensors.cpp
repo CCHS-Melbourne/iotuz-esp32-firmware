@@ -1,31 +1,33 @@
 #include "sensors.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
+#include "SparkFunBME280.h"
 
 #include "esp_log.h"
 
 static float readings[SENS_MAX-1];
-static tuz_sensor_port_t* open_ports[SENS_MAX-1];
+
 static QueueHandle_t *subscriptions;
 static size_t num_subscriptions;
 static SemaphoreHandle_t sensor_mutex;
 
 static const char *TAG = "sensors";
 
+TwoWire *i2cWire;
+BME280 bme280(0x77, i2cWire);
+
 static void sensor_task(void *arg);
 
-void sensors_init()
+void sensors_initialize(TwoWire *wire)
 {
+  i2cWire = wire;
+  bme280 = BME280(0x77, i2cWire);
   sensor_mutex = xSemaphoreCreateMutex();
-  xTaskCreate(sensor_task, "sensor_task", 4096, NULL, 1, NULL);
-}
 
-tuz_sensor_port_t*
-sensor_config(tuz_sensor_t sensor)
-{
-  tuz_sensor_port_t* tp = (tuz_sensor_port_t*)calloc(1, sizeof(tuz_sensor_port_t));
-  open_ports[sensor] = tp;
-  return tp;
+  ESP_LOGI(TAG, "BME280 0x%02x", bme280.begin());
+  ESP_LOGI(TAG, "ID(0xD0) 0x%02x", bme280.readRegister(BME280_CHIP_ID_REG));
+
+  xTaskCreate(sensor_task, "sensor_task", 4096, NULL, 1, NULL);
 }
 
 /* Internal function to update a cached sensor reading */
@@ -113,15 +115,6 @@ static void sensor_task(void *arg)
 	  case SENS_BAROMETRIC:
 		value = 3.0;
 		break;
-    case SENS_ACCEL_X:
-    value = 3.0;
-    break;
-    case SENS_ACCEL_Y:
-    value = 3.0;
-    break;
-    case SENS_ACCEL_Z:
-    value = 3.0;
-    break;
 	  default:
 		ESP_LOGE(TAG, "invalid tuz_sensor_t value %d", i);
 		continue;
@@ -143,12 +136,6 @@ const char *sensor_name(tuz_sensor_t sensor) {
 	return "altitude";
   case SENS_BAROMETRIC:
 	return "barometric";
-  case SENS_ACCEL_X:
-  return "accelerometer_x";
-  case SENS_ACCEL_Y:
-  return "accelerometer_y";
-  case SENS_ACCEL_Z:
-  return "accelerometer_z";
   default:
 	return "unknownsensor";
   }
