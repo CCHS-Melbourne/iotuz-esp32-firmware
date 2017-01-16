@@ -49,7 +49,7 @@ static void joystick_check_task(void *pvParameter)
       bool changed = (abs(joystick.last_x - x_value) > 20) || (abs(joystick.last_y - y_value) > 20);
 
       if (changed) {
-        ESP_LOGI(TAG, "x %d y %d", x_value, y_value);
+        //ESP_LOGI(TAG, "x %d y %d", x_value, y_value);
 
         joystick.previous_millis = millis();
         joystick.last_x = x_value;

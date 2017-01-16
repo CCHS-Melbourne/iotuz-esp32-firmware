@@ -122,7 +122,7 @@ static void send_joystick_task(void *pvParameter) {
 
     QueueHandle_t joystick = xQueueCreate(10, sizeof(joystick_reading_t));
 
-    if (! rotaryencoder_subscribe(joystick)) {
+    if (! joystick_subscribe(joystick)) {
         ESP_LOGE(TAG, "Failed to subscribe to button readings :(");
     }
 
@@ -133,8 +133,8 @@ static void send_joystick_task(void *pvParameter) {
                     reading.label,
                     reading.x_value,
                     reading.y_value);
-            mqtt_publish_int("joystick", "x", reading.x_value);
-            mqtt_publish_int("joystick", "y", reading.y_value);
+            mqtt_publish_int("x", "joystick", reading.x_value);
+            mqtt_publish_int("y", "joystick", reading.y_value);
         }
     }
 }
