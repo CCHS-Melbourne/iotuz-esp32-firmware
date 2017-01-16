@@ -94,6 +94,20 @@ static void sensor_task(void *arg)
   ESP_LOGI(TAG, "BME280 0x%02x", bme280.begin());
   ESP_LOGI(TAG, "ID(0xD0) 0x%02x", bme280.readRegister(BME280_CHIP_ID_REG));
 
+  ESP_LOGI(TAG, "Displaying ID, reset and ctrl regs\n");
+
+  ESP_LOGI(TAG, "ID(0xD0): 0x%02x", bme280.readRegister(BME280_CHIP_ID_REG));
+  ESP_LOGI(TAG, "Reset register(0xE0): 0x%02x", bme280.readRegister(BME280_RST_REG));
+  ESP_LOGI(TAG, "ctrl_meas(0xF4): 0x%02x", bme280.readRegister(BME280_CTRL_MEAS_REG));
+  ESP_LOGI(TAG, "ctrl_hum(0xF2): 0x%02x", bme280.readRegister(BME280_CTRL_HUMIDITY_REG));
+
+  bme280.settings.runMode = 3; //Normal mode
+  bme280.settings.tStandby = 0;
+  bme280.settings.filter = 2;
+  bme280.settings.tempOverSample = 1;
+  bme280.settings.pressOverSample = 1;
+  bme280.settings.humidOverSample = 1;
+
   loops = 0;
 
   while (1) {
