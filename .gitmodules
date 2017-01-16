@@ -1,6 +1,6 @@
 [submodule "components/arduino"]
 	path = components/arduino
-	url = https://github.com/espressif/arduino-esp32
+	url = https://github.com/projectgus/arduino-esp32.git
 [submodule "components/espmqtt"]
 	path = components/espmqtt
 	url = https://github.com/tuanpmt/espmqtt.git
@@ -19,3 +19,6 @@
 [submodule "components/ioextender/PCF8574_ESP"]
 	path = components/ioextender/PCF8574_ESP
 	url = https://github.com/WereCatf/PCF8574_ESP.git
+[submodule "esp-idf"]
+	path = esp-idf
+	url = http://github.com/espressif/esp-idf
