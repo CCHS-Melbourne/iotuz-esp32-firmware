@@ -8,20 +8,16 @@ extern "C" {
 
 void init_mqtt_service();
 
-/* Publish a sensor value via MQTT.
+/* Publish a value via MQTT.
 
    Probably not the final interface.
 
    Due to threading limitations, needs to be called from the
    same task which called init_mqtt_service().
 */
-void mqtt_publish_sensor(const char *sensor, float value);
-
-void mqtt_publish_button(const char *sensor, const char *state);
-
-void mqtt_publish_rotaryencoder(const char *sensor, int value);
-
-void mqtt_publish_value(const char *sensor, const char *prefix, int value);
+void mqtt_publish_float(const char *sensor, const char *prefix, float value);
+void mqtt_publish_string(const char *sensor, const char *prefix, const char *state);
+void mqtt_publish_int(const char *sensor, const char *prefix, int value);
 
 #ifdef __cplusplus
 }
