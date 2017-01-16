@@ -5,4 +5,12 @@
 
 PROJECT_NAME := app-template
 
-include $(IDF_PATH)/make/project.mk
+IDF_PATH := ./esp-idf
+
+PROJECT_MK := $(IDF_PATH)/make/project.mk
+
+ifeq ($(wildcard $(PROJECT_MK)),)
+$(error esp-idf submodule is missing. Run 'git submodule update --init --recursive')
+endif
+
+include $(PROJECT_MK)
