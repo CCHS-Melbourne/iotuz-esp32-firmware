@@ -5,7 +5,7 @@
 
 PROJECT_NAME := app-template
 
-IDF_PATH := ./esp-idf
+export IDF_PATH := $(abspath ./esp-idf)
 
 PROJECT_MK := $(IDF_PATH)/make/project.mk
 
