@@ -45,7 +45,7 @@ static void send_telemetry_task(void *pvParameter)
     while (1) {
         value = esp_get_free_heap_size();
 
-        mqtt_publish_value("free_heap_size", "esp", value);
+        mqtt_publish_int("free_heap_size", "esp", value);
 
         vTaskDelay(10000 / portTICK_PERIOD_MS);
     }
@@ -69,7 +69,7 @@ static void send_sensors_task(void *pvParameter) {
                    name,
                    reading.sensor,
                    reading.value);
-          mqtt_publish_sensor(name, reading.value);
+          mqtt_publish_float(name, "sensor", reading.value);
         }
     }
 }
@@ -90,7 +90,7 @@ static void send_buttons_task(void *pvParameter) {
             ESP_LOGI(TAG, "%s state %s",
                     reading.label,
                     reading.state);
-            mqtt_publish_button(reading.label, reading.state);
+            mqtt_publish_string(reading.label, "button", reading.state);
         }
     }
 }
@@ -111,7 +111,7 @@ static void send_rotaryencoder_task(void *pvParameter) {
             ESP_LOGI(TAG, "%s reading %d",
                     reading.label,
                     reading.value);
-            mqtt_publish_rotaryencoder(reading.label, reading.value);
+            mqtt_publish_int(reading.label, "encoder", reading.value);
         }
     }
 }
@@ -133,8 +133,8 @@ static void send_joystick_task(void *pvParameter) {
                     reading.label,
                     reading.x_value,
                     reading.y_value);
-            mqtt_publish_value("joystick", "x", reading.x_value);
-            mqtt_publish_value("joystick", "y", reading.y_value);
+            mqtt_publish_int("joystick", "x", reading.x_value);
+            mqtt_publish_int("joystick", "y", reading.y_value);
         }
     }
 }
