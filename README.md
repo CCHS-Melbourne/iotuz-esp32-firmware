@@ -1,8 +1,10 @@
-# esp32-iotuz
+# iotuz-esp32-firmware
 
-This is the firmware for the iotuz board being developed for linuxconf 2017.
+This is the firmware for the IoTuz board being developed for Linux Conf 2017.
 
-# building
+IoTuz hardware can be found at https://github.com/CCHS-Melbourne/iotuz-esp32-hardware
+
+# Building
 
 After cloning this repository remember to update submodules.
 
@@ -23,7 +25,7 @@ make
 ESPPORT=/dev/tty.SLAB_USBtoUART make flash
 ```
 
-# references
+# References
 
 * [Espressif IoT Development Framework](https://github.com/espressif/esp-idf)
 * [esp32-mqtt](https://github.com/tuanpmt/esp32-mqtt)
