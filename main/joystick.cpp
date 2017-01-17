@@ -25,9 +25,9 @@ bool joystick_subscribe(QueueHandle_t queue)
 	return false;
   }
 
-  num_subscriptions++;
   subscriptions = (QueueHandle_t *)new_subscriptions;
-  subscriptions[num_subscriptions-1] = queue;
+  subscriptions[num_subscriptions] = queue;
+  num_subscriptions++;
   return true;
 }
 
