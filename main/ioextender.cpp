@@ -3,8 +3,6 @@
 
 static const char *TAG = "ioextender";
 
-static TwoWire testWire(1);
-
 static QueueHandle_t *subscriptions;
 static size_t num_subscriptions;
 
@@ -21,10 +19,6 @@ void PCFInterrupt();
 bool check_button(PCF857x *pcf8574, button_check_s* button);
 
 void ioextender_initialize() {
-
-  testWire.begin(GPIO_NUM_21, GPIO_NUM_22);
-  testWire.setClock(100000L);
-
   xTaskCreatePinnedToCore(i2c_scan_task, "i2c_scan_task", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(pcf8574_check_task, "pcf8574_check_task", 4096, NULL, 1, NULL, 1);
 }
@@ -46,6 +40,10 @@ bool buttons_subscribe(QueueHandle_t queue)
 static void i2c_scan_task(void *pvParameter)
 {
   ESP_LOGI(TAG, "i2c scan task running");
+
+  TwoWire testWire(1);
+  testWire.begin(GPIO_NUM_21, GPIO_NUM_22);
+  testWire.setClock(100000L);
 
   while(1)
   {
@@ -73,6 +71,9 @@ static void i2c_scan_task(void *pvParameter)
 
 static void pcf8574_check_task(void *pvParameter)
 {
+  TwoWire testWire(1);
+  testWire.begin(GPIO_NUM_21, GPIO_NUM_22);
+  testWire.setClock(100000L);
 
   button_check_s buttonA = {0, 0, HIGH, IOEXT_A_BTN, "ButtonA"};
   button_check_s buttonB = {0, 0, HIGH, IOEXT_B_BTN, "ButtonB"};
