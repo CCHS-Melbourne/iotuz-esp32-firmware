@@ -37,7 +37,7 @@ static void joystick_check_task(void *pvParameter)
   pinMode(JOYSTICK_PIN_Y, INPUT);
 
   while (1) {
-
+    vTaskDelay(100 / portTICK_PERIOD_MS);
     if (millis() - joystick.previous_millis >= JOYSTICK_SAMPLE_MILLIS) {
 
       int x_value = analogRead(JOYSTICK_PIN_X);
