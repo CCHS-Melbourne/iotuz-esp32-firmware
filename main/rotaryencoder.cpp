@@ -10,7 +10,7 @@ static SemaphoreHandle_t rotaryencoder_interrupt_sem;
 
 static void rotaryencoder_check_task(void *pvParameter);
 void update_encoder(rotaryencoder_check_s *encoder);
-static void PCFInterrupt();
+static void EncoderInterrupt();
 
 void rotaryencoder_initialize() {
   rotaryencoder_interrupt_sem = xSemaphoreCreateBinary();
@@ -36,13 +36,14 @@ static void rotaryencoder_check_task(void *pvParameter)
 
     pinMode(RENC_PIN1, INPUT_PULLUP);
     pinMode(RENC_PIN2, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(RENC_PIN1), PCFInterrupt, FALLING);
-    attachInterrupt(digitalPinToInterrupt(RENC_PIN2), PCFInterrupt, FALLING);
 
     rotaryencoder_check_s encoder = {0,0,0,0,0,"Encoder1"};
 
+      attachInterrupt(digitalPinToInterrupt(RENC_PIN1), EncoderInterrupt, FALLING);
+      attachInterrupt(digitalPinToInterrupt(RENC_PIN2), EncoderInterrupt, FALLING);
+
     while(1) {
-	    xSemaphoreTake(rotaryencoder_interrupt_sem, portMAX_DELAY); /* Wait for interrupt */
+	  xSemaphoreTake(rotaryencoder_interrupt_sem, portMAX_DELAY); /* Wait for interrupt */
       update_encoder(&encoder);
     }
 }
@@ -87,7 +88,7 @@ void update_encoder(rotaryencoder_check_s *encoder)
   }
 }
 
-static void PCFInterrupt()
+static void IRAM_ATTR EncoderInterrupt()
 {
   portBASE_TYPE higher_task_awoken = pdFALSE;
   xSemaphoreGiveFromISR(rotaryencoder_interrupt_sem, &higher_task_awoken);
