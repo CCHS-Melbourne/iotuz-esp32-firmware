@@ -22,3 +22,6 @@
 [submodule "esp-idf"]
 	path = esp-idf
 	url = http://github.com/espressif/esp-idf
+[submodule "components/leds/esp32-ws2812"]
+	path = components/leds/esp32-ws2812
+	url = https://github.com/wolfeidau/esp32-ws2812.git
