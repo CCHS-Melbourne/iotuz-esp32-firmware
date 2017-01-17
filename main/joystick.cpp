@@ -7,10 +7,7 @@ static const char *TAG = "joystick";
 static QueueHandle_t *subscriptions;
 static size_t num_subscriptions;
 
-static SemaphoreHandle_t interrupt_sem;
-
 static void joystick_check_task(void *pvParameter);
-static void PCFInterrupt();
 
 void joystick_initialize()
 {
@@ -69,15 +66,6 @@ static void joystick_check_task(void *pvParameter)
 
     }
 
-    vTaskDelay(50 / portTICK_PERIOD_MS);      
-  }
-}
-
-static void PCFInterrupt()
-{
-  portBASE_TYPE higher_task_awoken;
-  xSemaphoreGiveFromISR(interrupt_sem, &higher_task_awoken);
-  if (higher_task_awoken) {
-	portYIELD_FROM_ISR();
+    vTaskDelay(50 / portTICK_PERIOD_MS);
   }
 }
