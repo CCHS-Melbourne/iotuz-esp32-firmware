@@ -89,7 +89,7 @@ void update_encoder(rotaryencoder_check_s *encoder)
 
 static void PCFInterrupt()
 {
-  portBASE_TYPE higher_task_awoken;
+  portBASE_TYPE higher_task_awoken = pdFALSE;
   xSemaphoreGiveFromISR(rotaryencoder_interrupt_sem, &higher_task_awoken);
   if (higher_task_awoken) {
 	portYIELD_FROM_ISR();
