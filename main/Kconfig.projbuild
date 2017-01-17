@@ -24,4 +24,16 @@ config MQTT_SERVER
     help
         MQTT_SERVER the MQTT server to connect to.
 
+config MQTT_USERNAME
+    string "MQTT Username"
+    default ""
+    help
+        MQTT_USERNAME the username to authenticate to the MQTT. Blank for no auth.
+
+config MQTT_PASSWORD
+    string "MQTT Password"
+    default ""
+    help
+        MQTT_PASSWORD the password to authenticate to MQTT. Blank for no auth.
+
 endmenu
