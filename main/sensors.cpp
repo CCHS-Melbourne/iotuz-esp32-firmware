@@ -13,8 +13,6 @@ static SemaphoreHandle_t sensor_mutex;
 
 static const char *TAG = "sensors";
 
-
-
 static void sensor_task(void *arg);
 
 void sensors_initialize()
