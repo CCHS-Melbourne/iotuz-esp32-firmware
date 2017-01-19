@@ -3,12 +3,9 @@
 
 static const char *TAG = "ioextender";
 
-static TwoWire testWire(1);
+static QueueHandle_t ioextender_queue;
 
-static QueueHandle_t *subscriptions;
-static size_t num_subscriptions;
-
-volatile bool PCFInterruptFlag = false;
+static SemaphoreHandle_t pcf_interrupt_sem;
 
 static int add_arr[] = {0x1a, 0x20, 0x53, 0x77};
 
@@ -17,35 +14,27 @@ static bool isvalueinarray(int val, int *arr, int size);
 
 static void pcf8574_check_task(void *pvParameter);
 void setup_pcf8574();
-void PCFInterrupt();
+static void PCFInterrupt();
 bool check_button(PCF857x *pcf8574, button_check_s* button);
 
 void ioextender_initialize() {
-
-  testWire.begin(GPIO_NUM_21, GPIO_NUM_22);
-  testWire.setClock(100000L);
-
+  pcf_interrupt_sem = xSemaphoreCreateBinary();
   xTaskCreatePinnedToCore(i2c_scan_task, "i2c_scan_task", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(pcf8574_check_task, "pcf8574_check_task", 4096, NULL, 1, NULL, 1);
 }
 
-bool buttons_subscribe(QueueHandle_t queue)
+void buttons_subscribe(QueueHandle_t queue)
 {
-  void *new_subscriptions = realloc(subscriptions, (num_subscriptions + 1) * sizeof(QueueHandle_t));
-  if (!new_subscriptions) {
-	ESP_LOGE(TAG, "Failed to allocate new subscription #%d", (num_subscriptions+1));
-	return false;
-  }
-
-  num_subscriptions++;
-  subscriptions = (QueueHandle_t *)new_subscriptions;
-  subscriptions[num_subscriptions-1] = queue;
-  return true;
+  ioextender_queue = queue;
 }
 
 static void i2c_scan_task(void *pvParameter)
 {
   ESP_LOGI(TAG, "i2c scan task running");
+
+  TwoWire testWire(1);
+  testWire.begin(GPIO_NUM_21, GPIO_NUM_22);
+  testWire.setClock(100000L);
 
   while(1)
   {
@@ -73,6 +62,9 @@ static void i2c_scan_task(void *pvParameter)
 
 static void pcf8574_check_task(void *pvParameter)
 {
+  TwoWire testWire(1);
+  testWire.begin(GPIO_NUM_21, GPIO_NUM_22);
+  testWire.setClock(100000L);
 
   button_check_s buttonA = {0, 0, HIGH, IOEXT_A_BTN, "ButtonA"};
   button_check_s buttonB = {0, 0, HIGH, IOEXT_B_BTN, "ButtonB"};
@@ -89,17 +81,14 @@ static void pcf8574_check_task(void *pvParameter)
   attachInterrupt(digitalPinToInterrupt(IOEXT_INTERRUPT_PIN), PCFInterrupt, FALLING);
 
   while(1) {
-    if(PCFInterruptFlag){
-      // ESP_LOGI(TAG, "PCF Interrupt");
-      check_button(&pcf8574, &buttonA);
-      check_button(&pcf8574, &buttonB);
-      check_button(&pcf8574, &encoderButton);
+    xSemaphoreTake(pcf_interrupt_sem, portMAX_DELAY);
 
-      pcf8574.resetInterruptPin();
-      PCFInterruptFlag = false;
-    }
+    // ESP_LOGI(TAG, "PCF Interrupt");
+    check_button(&pcf8574, &buttonA);
+    check_button(&pcf8574, &buttonB);
+    check_button(&pcf8574, &encoderButton);
 
-    vTaskDelay(IOEXT_POLL_INTERVAL_MILLIS / portTICK_PERIOD_MS);
+    pcf8574.resetInterruptPin();
   }
 }
 
@@ -123,8 +112,9 @@ bool check_button(PCF857x *pcf8574, button_check_s* button)
 	  .state = stringFromState(button->state),
     };
 
-    for (int i = 0; i < num_subscriptions; i++) {
-      xQueueSendToBack(subscriptions[i], &reading, 0);
+	QueueHandle_t queue = ioextender_queue;
+	if (queue) {
+      xQueueSendToBack(queue, &reading, 0);
     }
 
     return true;
@@ -133,9 +123,13 @@ bool check_button(PCF857x *pcf8574, button_check_s* button)
   return false;
 }
 
-void PCFInterrupt() 
+static void IRAM_ATTR PCFInterrupt()
 {
-  PCFInterruptFlag = true;
+    portBASE_TYPE higher_task_awoken = pdFALSE;
+	xSemaphoreGiveFromISR(pcf_interrupt_sem, &higher_task_awoken);
+	if (higher_task_awoken) {
+	  portYIELD_FROM_ISR();
+	}
 }
 
 void ioextender_write(uint8_t pin, uint8_t value) 

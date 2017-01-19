@@ -38,6 +38,6 @@ typedef struct {
 /* Call and pass in a queue reference to receive sensor_reading_t
    values as they are read from hardware.
 */
-bool sensors_subscribe(QueueHandle_t queue);
+void sensors_subscribe(QueueHandle_t queue);
 
 

@@ -7,8 +7,7 @@
 
 static float readings[SENS_MAX];
 
-static QueueHandle_t *subscriptions;
-static size_t num_subscriptions;
+static QueueHandle_t sensor_queue;
 static SemaphoreHandle_t sensor_mutex;
 
 static const char *TAG = "sensors";
@@ -36,13 +35,14 @@ static void sensor_set(tuz_sensor_t sensor, float value)
 	.sensor = sensor,
 	.value = value,
   };
-  for (int i = 0; i < num_subscriptions; i++) {
+  QueueHandle_t queue = sensor_queue;
+  if (queue) {
 	/* TODO: we assume that queueing the reading succeeds.
 	   if queue is full, we may want to pop from the front
 	   of the queue and then push again so the stale values
 	   are always recent.
 	*/
-	xQueueSendToBack(subscriptions[i], &reading, 0);
+	xQueueSendToBack(queue, &reading, 0);
   }
 }
 
@@ -61,18 +61,9 @@ float sensor_get(tuz_sensor_t sensor)
   return result;
 }
 
-bool sensors_subscribe(QueueHandle_t queue)
+void sensors_subscribe(QueueHandle_t queue)
 {
-  void *new_subscriptions = realloc(subscriptions, (num_subscriptions + 1) * sizeof(QueueHandle_t));
-  if (!new_subscriptions) {
-	ESP_LOGE(TAG, "Failed to allocate new subscription #%d", (num_subscriptions+1));
-	return false;
-  }
-
-  num_subscriptions++;
-  subscriptions = (QueueHandle_t *)new_subscriptions;
-  subscriptions[num_subscriptions-1] = queue;
-  return true;
+  sensor_queue = queue;
 }
 
 int loops;

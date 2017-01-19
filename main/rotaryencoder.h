@@ -28,4 +28,4 @@ typedef struct {
 } rotaryencoder_reading_t;
 
 void rotaryencoder_initialize();
-bool rotaryencoder_subscribe(QueueHandle_t queue);
+void rotaryencoder_subscribe(QueueHandle_t queue);
