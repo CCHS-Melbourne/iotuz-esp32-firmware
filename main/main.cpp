@@ -57,10 +57,7 @@ static void send_sensors_task(void *pvParameter) {
 // Subscribe to sensor values ...
 
   QueueHandle_t sensors = xQueueCreate(10, sizeof(sensor_reading_t));
-
-  if (! sensors_subscribe(sensors)) {
-    ESP_LOGE(TAG, "Failed to subscribe to sensor readings :(");
-  }
+  sensors_subscribe(sensors);
 
   while (1) {
     sensor_reading_t reading;
@@ -80,10 +77,7 @@ static void send_buttons_task(void *pvParameter) {
 // Subscribe to button values ...
 
   QueueHandle_t buttons = xQueueCreate(10, sizeof(button_reading_t));
-
-  if (! buttons_subscribe(buttons)) {
-    ESP_LOGE(TAG, "Failed to subscribe to button readings :(");
-  }
+  buttons_subscribe(buttons);
 
   while (1) {
     button_reading_t reading;
@@ -101,10 +95,7 @@ static void send_rotaryencoder_task(void *pvParameter) {
 // Subscribe to rotary encoder values ...
 
   QueueHandle_t rotaryencoder = xQueueCreate(10, sizeof(rotaryencoder_reading_t));
-
-  if (! rotaryencoder_subscribe(rotaryencoder)) {
-    ESP_LOGE(TAG, "Failed to subscribe to button readings :(");
-  }
+  rotaryencoder_subscribe(rotaryencoder);
 
   while (1) {
     rotaryencoder_reading_t reading;
@@ -122,20 +113,17 @@ static void send_joystick_task(void *pvParameter) {
 // Subscribe to joystick values ...
 
   QueueHandle_t joystick = xQueueCreate(10, sizeof(joystick_reading_t));
-
-  if (! joystick_subscribe(joystick)) {
-      ESP_LOGE(TAG, "Failed to subscribe to button readings :(");
-  }
+  joystick_subscribe(joystick);
 
   while (1) {
-    joystick_reading_t reading;
-    if (xQueueReceive(joystick, &reading, 6000 / portTICK_PERIOD_MS)) {
-        ESP_LOGI(TAG, "%s reading x=%d y=%d",
-                reading.label,
-                reading.x_value,
-                reading.y_value);
-        mqtt_publish_int("x", "joystick", reading.x_value);
-        mqtt_publish_int("y", "joystick", reading.y_value);
-    }
+      joystick_reading_t reading;
+      if (xQueueReceive(joystick, &reading, 6000 / portTICK_PERIOD_MS)) {
+          ESP_LOGI(TAG, "%s reading x=%d y=%d",
+                  reading.label,
+                  reading.x_value,
+                  reading.y_value);
+          mqtt_publish_int("x", "joystick", reading.x_value);
+          mqtt_publish_int("y", "joystick", reading.y_value);
+      }
   }
 }

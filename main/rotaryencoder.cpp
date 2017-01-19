@@ -3,9 +3,7 @@
 
 static const char *TAG = "ioextender";
 
-static QueueHandle_t *subscriptions;
-static size_t num_subscriptions;
-
+static QueueHandle_t encoder_queue;
 static SemaphoreHandle_t rotaryencoder_interrupt_sem;
 
 static void rotaryencoder_check_task(void *pvParameter);
@@ -17,30 +15,20 @@ void rotaryencoder_initialize() {
   xTaskCreatePinnedToCore(rotaryencoder_check_task, "rotaryencoder_check_task", 4096, NULL, 1, NULL, 1);
 }
 
-bool rotaryencoder_subscribe(QueueHandle_t queue)
+void rotaryencoder_subscribe(QueueHandle_t queue)
 {
-  void *new_subscriptions = realloc(subscriptions, (num_subscriptions + 1) * sizeof(QueueHandle_t));
-  if (!new_subscriptions) {
-	ESP_LOGE(TAG, "Failed to allocate new subscription #%d", (num_subscriptions+1));
-	return false;
-  }
-
-  subscriptions = (QueueHandle_t *)new_subscriptions;
-  subscriptions[num_subscriptions] = queue;
-  num_subscriptions++;
-  return true;
+  encoder_queue = queue;
 }
 
 static void rotaryencoder_check_task(void *pvParameter)
 {
-
     pinMode(RENC_PIN1, INPUT_PULLUP);
     pinMode(RENC_PIN2, INPUT_PULLUP);
 
     rotaryencoder_check_s encoder = {0,0,0,0,0,"Encoder1"};
 
-      attachInterrupt(digitalPinToInterrupt(RENC_PIN1), EncoderInterrupt, FALLING);
-      attachInterrupt(digitalPinToInterrupt(RENC_PIN2), EncoderInterrupt, FALLING);
+    attachInterrupt(digitalPinToInterrupt(RENC_PIN1), EncoderInterrupt, FALLING);
+    attachInterrupt(digitalPinToInterrupt(RENC_PIN2), EncoderInterrupt, FALLING);
 
     while(1) {
 	  xSemaphoreTake(rotaryencoder_interrupt_sem, portMAX_DELAY); /* Wait for interrupt */
@@ -81,10 +69,11 @@ void update_encoder(rotaryencoder_check_s *encoder)
   .value = encoder->encoder_value,
   };
 
+  QueueHandle_t queue = encoder_queue;
   // NOTE: This currently publishes a lot of messages while the encoder is being operated
   // need to optimise this to publish only changed values on a timer
-  for (int i = 0; i < num_subscriptions; i++) {
-      xQueueSendToBack(subscriptions[i], &reading, 0);
+  if (queue) {
+      xQueueSendToBack(queue, &reading, 0);
   }
 }
 

@@ -3,8 +3,7 @@
 
 static const char *TAG = "ioextender";
 
-static QueueHandle_t *subscriptions;
-static size_t num_subscriptions;
+static QueueHandle_t ioextender_queue;
 
 static SemaphoreHandle_t pcf_interrupt_sem;
 
@@ -24,18 +23,9 @@ void ioextender_initialize() {
   xTaskCreatePinnedToCore(pcf8574_check_task, "pcf8574_check_task", 4096, NULL, 1, NULL, 1);
 }
 
-bool buttons_subscribe(QueueHandle_t queue)
+void buttons_subscribe(QueueHandle_t queue)
 {
-  void *new_subscriptions = realloc(subscriptions, (num_subscriptions + 1) * sizeof(QueueHandle_t));
-  if (!new_subscriptions) {
-	ESP_LOGE(TAG, "Failed to allocate new subscription #%d", (num_subscriptions+1));
-	return false;
-  }
-
-  subscriptions = (QueueHandle_t *)new_subscriptions;
-  subscriptions[num_subscriptions] = queue;
-  num_subscriptions++;
-  return true;
+  ioextender_queue = queue;
 }
 
 static void i2c_scan_task(void *pvParameter)
@@ -122,8 +112,9 @@ bool check_button(PCF857x *pcf8574, button_check_s* button)
 	  .state = stringFromState(button->state),
     };
 
-    for (int i = 0; i < num_subscriptions; i++) {
-      xQueueSendToBack(subscriptions[i], &reading, 0);
+	QueueHandle_t queue = ioextender_queue;
+	if (queue) {
+      xQueueSendToBack(queue, &reading, 0);
     }
 
     return true;

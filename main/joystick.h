@@ -26,4 +26,4 @@ typedef struct {
 } joystick_reading_t;
 
 void joystick_initialize();
-bool joystick_subscribe(QueueHandle_t queue);
+void joystick_subscribe(QueueHandle_t queue);

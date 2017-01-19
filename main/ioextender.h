@@ -47,5 +47,5 @@ static inline const char* stringFromState(uint8_t bs)
 }
 
 void ioextender_initialize();
-bool buttons_subscribe(QueueHandle_t queue);
+void buttons_subscribe(QueueHandle_t queue);
 void ioextender_write(uint8_t pin, uint8_t value);
