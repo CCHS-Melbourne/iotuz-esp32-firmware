@@ -9,15 +9,9 @@
 #include "esp_system.h"
 #include "esp_event.h"
 #include "esp_log.h"
-#include "led_strip.h"
-
-#define LED_STRIP_LENGTH 2U
-#define LED_STRIP_RMT_INTR_NUM 19U
+#include "leds.h"
 
 static const char *TAG = "iotuz";
-
-static struct led_color_t led_strip_buf_1[LED_STRIP_LENGTH];
-static struct led_color_t led_strip_buf_2[LED_STRIP_LENGTH];
 
 static void send_telemetry_task(void *pvParameter);
 static void send_sensors_task(void *pvParameter);
@@ -29,7 +23,6 @@ extern "C" void app_main()
 {
 
 // Initialize sub-systems in orders of dependency ...
-
   wifi_initialize();    
   init_mqtt_service();
   ioextender_initialize();
@@ -37,24 +30,7 @@ extern "C" void app_main()
   iotuz_graphics_initialize();
   sensors_initialize();
   joystick_initialize();
-
-  struct led_strip_t led_strip = {
-      rgb_led_type: RGB_LED_TYPE_APA106,
-      led_strip_length: LED_STRIP_LENGTH,
-      rmt_channel: RMT_CHANNEL_0,
-      rmt_interrupt_num: LED_STRIP_RMT_INTR_NUM,
-      gpio: GPIO_NUM_23,
-      showing_buf_1: false,
-      led_strip_buf_1: led_strip_buf_1,
-      led_strip_buf_2: led_strip_buf_2,
-      access_semaphore: NULL,
-  };
-  
-  led_strip.access_semaphore = xSemaphoreCreateBinary();
-
-  if (led_strip_init(&led_strip)) {
-    //led_strip_clear(&led_strip);
-  }
+  leds_initialize();
 
   xTaskCreatePinnedToCore(send_telemetry_task, "send_telemetry_task", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(send_sensors_task, "send_sensors_task", 4096, NULL, 1, NULL, 1);

@@ -20,7 +20,7 @@
 
 #include <string.h>
 
-#define LED_STRIP_TASK_STACK_SIZE             (4096)
+#define LED_STRIP_TASK_SIZE             (4096)
 #define LED_STRIP_TASK_PRIORITY         (configMAX_PRIORITIES - 1)
 
 #define LED_STRIP_REFRESH_PERIOD_MS     (30U) // TODO: add as parameter to led_strip_init
@@ -333,7 +333,7 @@ bool led_strip_init(struct led_strip_t *led_strip)
     xSemaphoreGive(led_strip->access_semaphore);
     BaseType_t task_created = xTaskCreate(led_strip_task,
                                             "led_strip_task",
-                                            LED_STRIP_TASK_STACK_SIZE,
+                                            LED_STRIP_TASK_SIZE,
                                             led_strip,
                                             LED_STRIP_TASK_PRIORITY,
                                             &led_strip_task_handle
