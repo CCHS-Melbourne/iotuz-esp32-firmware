@@ -5,7 +5,7 @@
 
 #include "esp_log.h"
 
-static float readings[SENS_MAX-1];
+static float readings[SENS_MAX];
 
 static QueueHandle_t *subscriptions;
 static size_t num_subscriptions;
